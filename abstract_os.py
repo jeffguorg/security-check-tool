@@ -1,12 +1,17 @@
 from typing import Iterable
 
+import os
+
 
 class AbstractOS:
+    def __init__(self):
+        self.home_path = os.path.expanduser("~")
+        
     # 不要等获取完所有信息后返回list，而每获取到一条记录就使用 yield 返回它
     # 1.1 文件访问记录
     def get_file_access_records(self) -> Iterable[dict]:
         raise NotImplementedError()
-
+        
     # 1.2 已删除文件记录
     def get_deleted_files_records(self) -> Iterable[dict]:
         raise NotImplementedError()
