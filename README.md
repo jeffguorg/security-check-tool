@@ -26,6 +26,7 @@
 - 支持系统版本要求
     - windows 7/8/10
     - linux 为 国产操作系统uos20 
+    > uos镜像下载链接: https://pan.baidu.com/s/1YybZPDtZ58DPgtbwY1jveg 提取码: 8yvd 
 - 不能依赖太重的外部库，使用 Pyinstaller 打包之后程序不能超过 40 MB
 
 
