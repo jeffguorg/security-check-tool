@@ -2,7 +2,7 @@ from abstract_os import AbstractOS
 
 
 class WindowsNative(AbstractOS):
-    def get_usb_plugin_records(self):
+    def get_usb_storage_device_using_records(self):
         yield {
             "device_name": "KingSoft USB 2.0",
             "serilas": "241300000293",

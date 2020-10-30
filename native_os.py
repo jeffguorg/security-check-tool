@@ -26,5 +26,5 @@ class NativeOS(AbstractOS):
 
 if __name__ == '__main__':
     # s = NativeOS.instance().list_removable_drives()
-    for i in NativeOS().instance().get_usb_plugin_records():
+    for i in NativeOS().instance().get_usb_storage_device_using_records():
         print(i)
