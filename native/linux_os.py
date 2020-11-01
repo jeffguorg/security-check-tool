@@ -22,7 +22,19 @@ class LinuxNative(AbstractOS):
                 }
 
     def get_deleted_files_records(self) -> Iterable[dict]:
-        pass
+        for filename in os.listdir(os.path.expanduser("~/.local/share/Trash/files")):
+            info_filename = os.path.join(os.path.expanduser("~/.local/share/Trash/files"), filename + ".trashinfo")
+            config = configparser.ConfigParser()
+            config.read(info_filename)
+
+            stat = os.stat(filename)
+
+            yield {
+                "filepath": config['Trash Info']['Path'],
+                "delete_time": datetime.fromisoformat(config['Trash Info']['DeletionDate']),
+                "create_time": datetime.fromtimestamp(stat.st_ctime),
+                "modify_time": datetime.fromtimestamp(stat.st_mtime)
+            }
 
     def get_usb_storage_device_using_records(self) -> Iterable[dict]:
         pass
