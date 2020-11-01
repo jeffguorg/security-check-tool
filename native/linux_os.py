@@ -3,9 +3,13 @@ from abstract_os import AbstractOS
 
 from xml.etree import ElementTree
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import getpass
 import configparser
+import re
+
+import subprocess
+import shlex
 
 
 class LinuxNative(AbstractOS):
@@ -37,7 +41,34 @@ class LinuxNative(AbstractOS):
             }
 
     def get_usb_storage_device_using_records(self) -> Iterable[dict]:
-        pass
+        # get uptime
+        with open("/proc/uptime") as fp:
+            uptime_content = fp.read()
+        uptime = float(uptime_content.split()[0])
+
+
+        dmesg = subprocess.run(shlex.split("bash -c \"dmesg | grep 'usb [[:digit:]]-[[:digit:]]'\""), stdout=subprocess.PIPE)
+        devices = dict()
+        for line in dmesg.stdout.decode().splitlines():
+            match = re.match("\\[ *(?P<time>[0-9.]+)\\] *(?P<device>[^:]*): *(?P<message>.*)", line)
+            if match:
+                (msg_time, msg_device, msg_content) = match.groups()
+                if msg_device not in devices:
+                    devices[msg_device] = dict(
+                        Time = msg_time
+                    )
+                if ':' not in msg_content and '=' in msg_content:
+                    k, v = msg_content.split("=")
+                    devices[k.strip()] = v.strip()
+                    
+
+        for device in devices.values():
+            yield {
+                "serial": device["SerialNumber"],
+                "manufacture": device['Manufacturer'],
+                "device_name": device['Product'],
+                "last_plugin_time": datetime.now() - timedelta(seconds=uptime - device['Time'])
+            }
 
     def get_cell_phone_records(self) -> Iterable[dict]:
         pass
