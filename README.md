@@ -21,8 +21,9 @@
 ## 环境描述
 
 - 开发语言 python >= 3.6
+- 将依赖填写到对应的 requirements.txt 文件中
 - 操作系统 windows/linux/macos
-    > 优先支持 windows 和 linux系统，如果对于另一种系统不熟悉，可以只实现一种系统的功能
+    > 优先支持 linux 和 windows 系统，如果对于另一种系统不熟悉，可以只实现一种系统的功能
 - 支持系统版本要求
     - windows 7/8/10
     - linux 为 国产操作系统uos20 
