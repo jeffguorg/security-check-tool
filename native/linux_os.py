@@ -1,10 +1,25 @@
 from typing import Iterable
 from abstract_os import AbstractOS
 
+from xml.etree import ElementTree
+import os
+from datetime import datetime
+import getpass
+import configparser
+
 
 class LinuxNative(AbstractOS):
     def get_file_access_records(self) -> Iterable[dict]:
-        pass
+        etree = ElementTree.parse(os.path.expanduser("~/.local/share/recently-used.xbel"))
+        for bookmark in etree.findall("bookmark"):
+            if 'href' in bookmark.attrib:
+                href = bookmark.attrib['href']
+                yield {
+                    "username": getpass.getuser(),
+                    "access_time": bookmark.attrib['visited'],
+                    "file_path": href,
+                    "is_exists": os.path.exists(href)
+                }
 
     def get_deleted_files_records(self) -> Iterable[dict]:
         pass
