@@ -72,8 +72,11 @@ if __name__ == '__main__':
             assert 0 <= start <= 3
             methods = get_all_methods()[start*4:(start+1)*4]
             run_methods(methods)
-    elif len(argv) > 2:
-        run_methods(argv[1:])
+    elif len(argv) > 2 and argv[1] == 'call':
+        methods = argv[2:]
+        if not isinstance(methods, list):
+            methods = [methods]
+        run_methods(methods)
     else:
         run_methods([
             'get_file_access_records',
