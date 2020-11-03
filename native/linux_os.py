@@ -41,6 +41,12 @@ class LinuxNative(AbstractOS):
             }
 
     def get_usb_storage_device_using_records(self) -> Iterable[dict]:
+        pass
+
+    def get_cell_phone_records(self) -> Iterable[dict]:
+        pass
+
+    def get_all_usb_device_records(self) -> Iterable[dict]:
         # get uptime
         with open("/proc/uptime") as fp:
             uptime_content = fp.read()
@@ -69,12 +75,6 @@ class LinuxNative(AbstractOS):
                 "device_name": device['Product'],
                 "last_plugin_time": datetime.now() - timedelta(seconds=uptime - device['Time'])
             }
-
-    def get_cell_phone_records(self) -> Iterable[dict]:
-        pass
-
-    def get_all_usb_device_records(self) -> Iterable[dict]:
-        pass
 
     def get_installed_anti_virus_software_records(self) -> Iterable[dict]:
         pass
