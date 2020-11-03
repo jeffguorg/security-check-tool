@@ -57,7 +57,12 @@ class LinuxNative(AbstractOS):
         WARN: kernel buffer can be cleared so messages can be lost
 
 
-        a more proper way to do this, is to configure udev to log usb storage device
+        a more proper way to do this, is to configure udev to log usb storage device:
+            - add a script at /path/to/script which write message to /tmp/usb-storages.log
+            - add a rule in /etc/udev/rules.d/XX-monitor-usb-storage.rules:
+                ACTION=="add", KERNEL=="sd?", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", RUN+="/path/to/script"
+            - cat /tmp/usb-storages.log
+
         """
         # get uptime
         with open("/proc/uptime") as fp:
