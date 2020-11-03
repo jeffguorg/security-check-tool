@@ -65,7 +65,7 @@ class LinuxNative(AbstractOS):
                     )
                 if ':' not in msg_content and '=' in msg_content:
                     k, v = msg_content.split("=")
-                    devices[k.strip()] = v.strip()
+                    devices[msg_device][k.strip()] = v.strip()
                     
 
         for device in devices.values():
