@@ -22,16 +22,46 @@ class NativeOS(AbstractOS):
             raise NotImplementedError(os_name)
         return self._instance
 
-
-def run_all():
+def get_all_methods():
     # https://stackoverflow.com/questions/34439/finding-what-methods-a-python-object-has/20100900
     instance = NativeOS().instance()
-    obj_methods = [ method_name for method_name in dir(instance)
+    return  [ method_name for method_name in dir(instance)
                    if callable(getattr(instance, method_name)) and not method_name.startswith('__')]
+
+
+def run_methods(selected_methods:list):
+    obj_methods = get_all_methods()
+    total_count = len(selected_methods)
+    implement_methods = []
+    failed_methods = []
+    for method_name in selected_methods:
+        assert (method_name in obj_methods)
+        func = getattr(NativeOS().instance(), method_name)
+        print(f'CALL {method_name}')
+        try:
+            generator = func()
+            for i in generator:
+                print(i)
+            implement_methods.append(method_name)
+        except Exception as ex:
+            print(ex)
+            failed_methods.append(method_name)
+        print("-----------------FAILED----------------")
+        for i in failed_methods:
+            print(i)
+        implement_count = len(implement_methods)
+        print("-------------------OK------------------")
+        for i in implement_methods:
+            print(i)
+        print(f"{implement_count} of {total_count} has implemented {implement_count * 100 / total_count}%")
+
+
+def run_all():
+    obj_methods = get_all_methods()
     total_count = len(obj_methods)
     implement_count = 0
     for name in obj_methods:
-        func = getattr(instance, name)
+        func = getattr(NativeOS().instance(), name)
         generator = func()
         if generator is None:
             print(f"not implemented {name}")
@@ -42,5 +72,7 @@ def run_all():
                 print(i)
     print(f"{implement_count} of {total_count} has implemented {implement_count*100/total_count}%")
 
+
 if __name__ == '__main__':
-    run_all()
+    # run_all()
+    run_methods(['get_file_access_records', 'get_deleted_files_records', 'get_usb_storage_device_using_records'])
