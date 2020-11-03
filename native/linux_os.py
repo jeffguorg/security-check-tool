@@ -54,6 +54,8 @@ class LinuxNative(AbstractOS):
             [  971.485029] scsi 2:0:0:0: Direct-Access     Samsung  Portable SSD T5  0    PQ: 0 ANSI: 6
             [  971.486953] sd 2:0:0:0: Attached scsi generic sg1 type 0
 
+        WARN: kernel buffer can be cleared so messages can be lost
+
 
         a more proper way to do this, is to configure udev to log usb storage device
         """
