@@ -1,20 +1,181 @@
+import os
+import sys
+import win32com.client 
+import datetime
+import getpass
+import winshell as ws
 from typing import Iterable
-
 from abstract_os import AbstractOS
+from winreg import *
 
 
 class WindowsNative(AbstractOS):
     def get_file_access_records(self) -> Iterable[dict]:
-        pass
+
+        direction = 'C:\\Users\\'+getpass.getuser()+'\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\'
+        file_lists = os.listdir(direction)
+
+        for i in range(len(file_lists)):
+            record={}
+            try:
+                shell = win32com.client.Dispatch("WScript.Shell")
+                shortcut = shell.CreateShortCut(direction+file_lists[i])
+                record["username"]=direction.split("\\")[2]
+                record["access_time"]=str(datetime.datetime.utcfromtimestamp(int(os.path.getatime(direction+file_lists[i]))))
+                record["file_path"]=shortcut.Targetpath
+                if os.path.exists(shortcut.Targetpath):
+                    record["is_exists"]=True  
+                else:
+                    record["is_exists"]=False
+
+                yield record
+            except:
+                pass
 
     def get_deleted_files_records(self) -> Iterable[dict]:
-        pass
+
+        records=list(ws.recycle_bin())
+
+        if len(records)==0:
+            return "Empty Recycle Bin"
+        for i in range(len(records)):
+            record={}
+
+            record["filepath"]=str(records[i].original_filename())
+            try:
+                record["create_time"]=str(records[i].getctime())[:-13]
+                record["modify_time"]=str(records[i].getmtime())[:-13]
+            except Exception:
+                record["create_time"]=str(records[i].recycle_date())[:-6]
+                record["modify_time"]=str(records[i].recycle_date())[:-6]
+
+            yield record
+
+    def get_usb_storage_device_using_records(self):
+
+        regRoot = ConnectRegistry(None, HKEY_LOCAL_MACHINE)
+        subDir = r"SYSTEM\CurrentControlSet\Enum\USBSTOR"
+        keyHandle = OpenKey(regRoot, subDir)
+        count = QueryInfoKey(keyHandle)[0]
+
+        for i in range(count):
+            subKeyName = EnumKey(keyHandle, i)
+            subDir_2 = r'%s\%s' % (subDir, subKeyName)
+            keyHandle_2 = OpenKey(regRoot, subDir_2)
+            num = QueryInfoKey(keyHandle_2)[0]
+            for j in range(num):
+
+                subKeyName_2 = EnumKey(keyHandle_2, j)
+                result_path = r'%s\%s' % (subDir_2, subKeyName_2)
+                keyHandle_3 = OpenKey(regRoot, result_path)
+                numKey = QueryInfoKey(keyHandle_3)[1]
+                for k in range(numKey):
+                    record={}
+                    name, value, type_ = EnumValue(keyHandle_3, k)
+                    if(('Service' in name) and ('disk'in value)):
+                        device_name,type_ = QueryValueEx(keyHandle_3,'FriendlyName')
+                        serilas= subKeyName_2
+                        manufacture=device_name.split(" ")[0]
+                        description,type_ = QueryValueEx(keyHandle_3,'DeviceDesc')
+
+                        with open('C:\\Windows\\inf\\setupapi.dev.log', 'r') as f1:
+                            list1 = f1.readlines()
+                        le=len(list1)
+                        for i in range(0, len(list1)):
+                            if serilas[:-2] in list1[i-le] :
+                                last_plugin_time=list1[i-le+1][19:-8]
+                                break
+                        record["device_name"]=device_name
+                        record["serilas"]=serilas[:-2]
+                        record["manufacture"]=manufacture
+                        record["description"]=str(description.split(";")[1:])[1:-1]
+                        record["last_plugin_time"]=last_plugin_time
+
+                        yield record
+        CloseKey(keyHandle)
+        CloseKey(regRoot)
 
     def get_cell_phone_records(self) -> Iterable[dict]:
-        pass
+
+        regRoot = ConnectRegistry(None, HKEY_LOCAL_MACHINE)
+        subDir = r"SYSTEM\CurrentControlSet\Enum\USB"
+        keyHandle = OpenKey(regRoot, subDir)
+        count = QueryInfoKey(keyHandle)[0]
+
+        for i in range(count):
+            subKeyName = EnumKey(keyHandle, i)
+            subDir_2 = r'%s\%s' % (subDir, subKeyName)
+            keyHandle_2 = OpenKey(regRoot, subDir_2)
+            num = QueryInfoKey(keyHandle_2)[0]
+
+            for j in range(num):
+                subKeyName_2 = EnumKey(keyHandle_2, j)
+                result_path = r'%s\%s' % (subDir_2, subKeyName_2)
+                keyHandle_3 = OpenKey(regRoot, result_path)
+                numKey = QueryInfoKey(keyHandle_3)[1]
+                for k in range(numKey):
+                    record={}
+                    name, value, type_ = EnumValue(keyHandle_3, k)
+                    if(('Service' in name) and ('WUDFRd'in value)):
+                        device_name,type_ = QueryValueEx(keyHandle_3,'FriendlyName')
+                        manufacture,type_ = QueryValueEx(keyHandle_3,'Mfg')
+                        storage,type_ = QueryValueEx(keyHandle_3,'Capabilities')
+                        serilas= subKeyName_2
+                        with open('C:\\Windows\\inf\\setupapi.dev.log', 'r') as f1:
+                            list1 = f1.readlines()
+                        le=len(list1)
+                        for i in range(0, len(list1)):
+                            if serilas[:-2] in list1[i-le] :
+                                last_plugin_time=list1[i-le+1][19:-8]
+                                break
+                        record["device_name"]=device_name
+                        record["manufacture"]=manufacture
+                        record["storage"]=str(storage)+"GB"
+                        record["last_plugin_time"]=last_plugin_time
+
+                        yield record
+        CloseKey(keyHandle)
+        CloseKey(regRoot)
 
     def get_all_usb_device_records(self) -> Iterable[dict]:
-        pass
+
+        regRoot = ConnectRegistry(None, HKEY_LOCAL_MACHINE)
+        subDir = r"SYSTEM\CurrentControlSet\Enum\USB"
+        keyHandle = OpenKey(regRoot, subDir)
+        count = QueryInfoKey(keyHandle)[0]
+
+        for i in range(count):
+            subKeyName = EnumKey(keyHandle, i)
+            subDir_2 = r'%s\%s' % (subDir, subKeyName)
+            keyHandle_2 = OpenKey(regRoot, subDir_2)
+            num = QueryInfoKey(keyHandle_2)[0]
+            for j in range(num):
+                record={}
+                subKeyName_2 = EnumKey(keyHandle_2, j)
+                result_path = r'%s\%s' % (subDir_2, subKeyName_2)
+                keyHandle_3 = OpenKey(regRoot, result_path)
+                numKey = QueryInfoKey(keyHandle_3)[1]
+                name, value, type_ = EnumValue(keyHandle_3, 0)
+                flag,type_ = QueryValueEx(keyHandle_3,'Service')
+                if flag=='USBSTOR':
+                    pass
+                else:
+                    try: 
+                        name1,type_ = QueryValueEx(keyHandle_3,'FriendlyName')
+                        manufacture,type_ = QueryValueEx(keyHandle_3,'Mfg')
+                        description,type_ = QueryValueEx(keyHandle_3,'DeviceDesc') 
+                    except:
+                        name1,type_ = QueryValueEx(keyHandle_3,'DeviceDesc')
+                        manufacture,type_ = QueryValueEx(keyHandle_3,'Mfg')
+                        description,type_ = QueryValueEx(keyHandle_3,'DeviceDesc') 
+                    record["name"]=name1.split(";")[-1].replace("(","").replace(")","")
+                    record["manufacture"]=manufacture.split(";")[-1].replace("(","").replace(")","")
+                    record["description"]=description.split(";")[-1].split(";")[-1].replace("(","").replace(")","")
+                    record["V_P_ID"]=subKeyName.split(";")[-1]
+
+                    yield record
+        CloseKey(keyHandle)
+        CloseKey(regRoot)
 
     def get_installed_anti_virus_software_records(self) -> Iterable[dict]:
         pass
@@ -49,19 +210,3 @@ class WindowsNative(AbstractOS):
     def get_system_drives_records(self) -> Iterable[dict]:
         pass
 
-    def get_usb_storage_device_using_records(self):
-        yield {
-            "device_name": "KingSoft USB 2.0",
-            "serilas": "241300000293",
-            "manufacture": "Samsung",
-            "description": "USB 2.0 Flash Driveß",
-            "last_plugin_time": "2020-10-22 08:10"
-        }
-
-        yield {
-            "device_name": "Toshiba USB 3.0",
-            "serilas": "241300001293",
-            "manufacture": "japen toshiba",
-            "description": "USB 3.0 Flash",
-            "last_plugin_time": "2020-10-29 19:56"
-        }
