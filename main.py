@@ -1,4 +1,5 @@
 from sys import platform as os_name
+from sys import argv
 from abstract_os import AbstractOS
 
 
@@ -46,10 +47,10 @@ def run_methods(selected_methods:list):
             implement_methods.append(method_name)
         except Exception as ex:
             print(f'failed call {method_name}', ex)
-            failed_methods.append(method_name)
-    print("-----------------FAILED----------------")
-    for i in failed_methods:
-        print(i)
+    if len(failed_methods) > 0:
+        print("-----------------FAILED----------------")
+        for i in failed_methods:
+            print(i)
     implement_count = len(implement_methods)
     print("-------------------OK------------------")
     for i in implement_methods:
@@ -58,5 +59,25 @@ def run_methods(selected_methods:list):
 
 
 if __name__ == '__main__':
-    # run_methods(['get_file_access_records', 'get_deleted_files_records', 'get_usb_storage_device_using_records'])
-    run_methods(None)
+    if len(argv) == 2:
+        argument = argv[1]
+        if argument == 'all':
+            run_methods(None)
+        elif argument == 'list':
+            for i,n in enumerate(get_all_methods()):
+                print(i+1, n)
+        elif argument.isdigit():
+            start = int(argument) - 1
+            print(f'start is {start}')
+            assert 0 <= start <= 3
+            methods = get_all_methods()[start*4:(start+1)*4]
+            run_methods(methods)
+    elif len(argv) > 2:
+        run_methods(argv[1:])
+    else:
+        run_methods([
+            'get_file_access_records',
+            'get_deleted_files_records',
+            'get_usb_storage_device_using_records',
+            'get_cell_phone_records'
+        ])
