@@ -1,5 +1,4 @@
 from sys import platform as os_name
-
 from abstract_os import AbstractOS
 
 
@@ -24,7 +23,24 @@ class NativeOS(AbstractOS):
         return self._instance
 
 
+def run_all():
+    # https://stackoverflow.com/questions/34439/finding-what-methods-a-python-object-has/20100900
+    instance = NativeOS().instance()
+    obj_methods = [ method_name for method_name in dir(instance)
+                   if callable(getattr(instance, method_name)) and not method_name.startswith('__')]
+    total_count = len(obj_methods)
+    implement_count = 0
+    for name in obj_methods:
+        func = getattr(instance, name)
+        generator = func()
+        if generator is None:
+            print(f"not implemented {name}")
+        else:
+            print(f'CALL {name}')
+            implement_count += 1
+            for i in generator:
+                print(i)
+    print(f"{implement_count} of {total_count} has implemented {implement_count*100/total_count}%")
+
 if __name__ == '__main__':
-    # s = NativeOS.instance().list_removable_drives()
-    for i in NativeOS().instance().get_usb_storage_device_using_records():
-        print(i)
+    run_all()
