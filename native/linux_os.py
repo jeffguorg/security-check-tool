@@ -61,8 +61,10 @@ class LinuxNative(AbstractOS):
             config = configparser.RawConfigParser()
             config.read(info_filename)
 
+            filepath = unquote(config['Trash Info']['Path'])
+
             yield {
-                "filepath": config['Trash Info']['Path'],
+                "filepath": filepath,
                 "delete_time": datetime.fromisoformat(config['Trash Info']['DeletionDate']),
             }
 
