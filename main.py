@@ -3,7 +3,8 @@ from sys import argv
 from runner import get_all_methods
 from runner import run_methods
 
-if __name__ == '__main__':
+
+def main():
     if len(argv) == 2:
         argument = argv[1]
         if argument == 'all':
@@ -34,3 +35,7 @@ if __name__ == '__main__':
             'get_installed_software_records',
             'get_services_records'
         ])
+
+
+if __name__ == '__main__':
+    main()

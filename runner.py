@@ -12,7 +12,7 @@ def get_all_methods():
 
 
 def run_instance_method(method_name, max_items=3):
-    print(f'call {method_name}()')
+    print(f'***************** {method_name} ***************** ')
     func = getattr(NativeOS().instance(), method_name)
     ts = time.time()
     generator = func()
@@ -43,14 +43,15 @@ def run_methods(selected_methods: list):
     total_count = len(selected_methods)
     implement_methods = []
     failed_methods = []
-    for method_name in selected_methods:
+    for i, method_name in enumerate(selected_methods):
+        i += 1
         assert (method_name in obj_methods)
         try:
             spent_ms = run_instance_method(method_name)
-            implement_methods.append((method_name, spent_ms))
+            implement_methods.append((i, method_name, spent_ms))
         except Exception as ex:
             traceback.print_exc()
-            failed_methods.append((method_name, ex))
+            failed_methods.append((i, method_name, ex))
     dump_results(failed_methods, False)
     dump_results(implement_methods, True)
     implement_count = len(implement_methods)
