@@ -2,6 +2,7 @@ from typing import Iterable
 from abstract_os import AbstractOS
 
 from xml.etree import ElementTree
+from urllib.parse import unquote
 import os
 from datetime import datetime, timedelta
 import getpass
@@ -19,6 +20,9 @@ class LinuxNative(AbstractOS):
         for bookmark in etree.findall("bookmark"):
             if 'href' in bookmark.attrib:
                 href = bookmark.attrib['href']
+                if href.startswith("file://"):
+                    href = href[7:]
+                href = unquote(href)
                 yield {
                     "username": getpass.getuser(),
                     "access_time": bookmark.attrib['visited'],
@@ -26,19 +30,40 @@ class LinuxNative(AbstractOS):
                     "is_exists": os.path.exists(href)
                 }
 
+        for desktop_file in os.listdir(os.path.expanduser("~/.local/share/RecentDocuments")):
+            desktop_filepath = os.path.join(os.path.expanduser("~/.local/share/RecentDocuments"), desktop_file)
+            config = configparser.ConfigParser()
+            config.read(desktop_filepath)
+
+            stat = os.stat(desktop_filepath)
+            filepath = None
+            for k, v in config["Desktop Entry"].items():
+                if k.lower().startswith("url") and v.startswith("file:"):
+                    filepath = v.lstrip("file:")
+
+            if filepath is None:
+                continue
+
+            filepath = os.path.expanduser(filepath)
+            filepath = os.path.expandvars(filepath)
+
+            yield {
+                    "username": getpass.getuser(),
+                    "access_time": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                    "file_path": filepath,
+                    "is_exists": os.path.exists(filepath)
+            }
+
+
     def get_deleted_files_records(self) -> Iterable[dict]:
         for filename in os.listdir(os.path.expanduser("~/.local/share/Trash/files")):
-            info_filename = os.path.join(os.path.expanduser("~/.local/share/Trash/files"), filename + ".trashinfo")
-            config = configparser.ConfigParser()
+            info_filename = os.path.join(os.path.expanduser("~/.local/share/Trash/info"), filename + ".trashinfo")
+            config = configparser.RawConfigParser()
             config.read(info_filename)
-
-            stat = os.stat(filename)
 
             yield {
                 "filepath": config['Trash Info']['Path'],
                 "delete_time": datetime.fromisoformat(config['Trash Info']['DeletionDate']),
-                "create_time": datetime.fromtimestamp(stat.st_ctime),
-                "modify_time": datetime.fromtimestamp(stat.st_mtime)
             }
 
     def _read_udev_log(self, filename, value_maps):
