@@ -1,3 +1,4 @@
+import traceback
 from sys import platform as os_name
 from sys import argv
 from abstract_os import AbstractOS
@@ -30,7 +31,7 @@ def get_all_methods():
                    if callable(getattr(instance, method_name)) and not method_name.startswith('__')]
 
 
-def run_methods(selected_methods:list):
+def run_methods(selected_methods:list, max_items=3):
     obj_methods = get_all_methods()
     if selected_methods is None:
         selected_methods = obj_methods
@@ -39,18 +40,22 @@ def run_methods(selected_methods:list):
     failed_methods = []
     for method_name in selected_methods:
         assert (method_name in obj_methods)
+        print(f'call {method_name}()')
         func = getattr(NativeOS().instance(), method_name)
         try:
             generator = func()
-            for i in generator:
-                print(i)
+            for i, item in enumerate(generator):
+                if i == max_items:
+                    break
+                print(item)
             implement_methods.append(method_name)
         except Exception as ex:
-            print(f'failed call {method_name}', ex)
+            traceback.print_exc()
+            failed_methods.append((method_name, ex))
     if len(failed_methods) > 0:
         print("-----------------FAILED----------------")
-        for i in failed_methods:
-            print(i)
+        for name, reason in failed_methods:
+            print(name, reason)
     implement_count = len(implement_methods)
     print("-------------------OK------------------")
     for i in implement_methods:
@@ -82,5 +87,10 @@ if __name__ == '__main__':
             'get_file_access_records',
             'get_deleted_files_records',
             'get_usb_storage_device_using_records',
-            'get_cell_phone_records'
+            'get_cell_phone_records',
+
+            'get_all_usb_device_records',
+            'get_installed_anti_virus_software_records',
+            'get_installed_software_records',
+            'get_services_records'
         ])

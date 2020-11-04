@@ -1,6 +1,8 @@
 import os
 import sys
-import win32com.client 
+import winreg
+
+import win32com.client
 import datetime
 import getpass
 import winshell as ws
@@ -188,7 +190,7 @@ class WindowsNative(AbstractOS):
 
         for i in sub_key:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                i, 0, winreg.KEY_ALL_ACCESS)
+                                i, 0, winreg.KEY_READ)
             for j in range(0, winreg.QueryInfoKey(key)[0]-1):
 
                 softwareInfo = {}
@@ -196,7 +198,7 @@ class WindowsNative(AbstractOS):
                     key_name = winreg.EnumKey(key, j)
                     key_path = i + '\\' + key_name
                     each_key = winreg.OpenKey(
-                        winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS)
+                        winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
 
                     name, REG_SZ = winreg.QueryValueEx(each_key, 'DisplayName')
                     version, REG_SZ = winreg.QueryValueEx(
@@ -244,14 +246,14 @@ class WindowsNative(AbstractOS):
                 r'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall']
         for i in sub_key:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                i, 0, winreg.KEY_ALL_ACCESS)
+                                i, 0, winreg.KEY_READ)
             for j in range(0, winreg.QueryInfoKey(key)[0]-1):
                 softwareInfo = {}
                 try:
                     key_name = winreg.EnumKey(key, j)
                     key_path = i + '\\' + key_name
                     each_key = winreg.OpenKey(
-                        winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS)
+                        winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
 
                     name, REG_SZ = winreg.QueryValueEx(each_key, 'DisplayName')
                     version, REG_SZ = winreg.QueryValueEx(
