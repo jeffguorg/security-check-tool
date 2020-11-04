@@ -1,1 +1,1 @@
-ACTION=="add", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", RUN+="/usr/local/bin/log-udev --output /var/log/udev-disks.log"
+ACTION=="add", KERNEL=="sd?", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", RUN+="/usr/local/bin/log-udev --output /var/log/udev-disks.log"

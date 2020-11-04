@@ -70,7 +70,7 @@ class LinuxNative(AbstractOS):
 
     def _read_udev_log(self, filename, value_maps):
         try:
-            with open("/var/log/udev-disks.log") as fp:
+            with open(filename) as fp:
                 for line in fp.readlines():
                     record = json.loads(line)
 
