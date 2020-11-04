@@ -273,10 +273,10 @@ class WindowsNative(AbstractOS):
                             install_path, REG_SZ = winreg.QueryValueEx(each_key, 'UninstallString')
                             install_path = os.path.dirname(install_path)+"\\"
                     softwareInfo["name"] = name
-                    softwareInfo["Publisher"] = Publisher
+                    softwareInfo["publisher"] = Publisher
                     softwareInfo["version"] = version
                     softwareInfo["install_path"] = install_path
-                    softwareInfo["InstallDate"] = InstallDate
+                    softwareInfo["install_date"] = InstallDate
                     yield softwareInfo
 
                 except WindowsError:
@@ -297,7 +297,6 @@ class WindowsNative(AbstractOS):
                 "file_path": s.PathName,
                 "status": s.State,
                 "is_system_service": is_system_service
-
             }
 
     def get_current_network_records(self) -> Iterable[dict]:
