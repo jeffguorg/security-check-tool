@@ -42,16 +42,19 @@ class LinuxNative(AbstractOS):
             }
 
     def _read_udev_log(self, filename, value_maps):
-        with open("/var/log/udev-disks.log") as fp:
-            for line in fp.readlines():
-                record = json.loads(line)
+        try:
+            with open("/var/log/udev-disks.log") as fp:
+                for line in fp.readlines():
+                    record = json.loads(line)
 
-                result = dict()
-                for k, v in value_maps.items():
-                    result.update({
-                        k: v(record)
-                    })
-                yield result
+                    result = dict()
+                    for k, v in value_maps.items():
+                        result.update({
+                            k: v(record)
+                        })
+                    yield result
+        except FileNotFoundError:
+            pass
 
 
     def get_usb_storage_device_using_records(self) -> Iterable[dict]:
@@ -61,7 +64,7 @@ class LinuxNative(AbstractOS):
         return self._read_udev_log("/var/log/udev-disks.log", {
             "serial": lambda x: x.get("ID_SERIAL_SHORT"),
             "device_name": lambda x: x.get("ID_MODEL"),
-            "last_plugin_time": lambda x: datetime.fromisoformat(x["time"]),
+            "last_plugin_time": lambda x: x["time"],
         })
 
     def get_cell_phone_records(self) -> Iterable[dict]:
@@ -165,7 +168,6 @@ class LinuxNative(AbstractOS):
                     }
                     devices.pop(device_id)
                     last_occurances.pop(device_id)
-                }
 
     def _obsolete_get_all_usb_device_records(self) -> Iterable[dict]:
         # get uptime
