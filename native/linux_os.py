@@ -96,7 +96,7 @@ class LinuxNative(AbstractOS):
 
     def get_cell_phone_records(self) -> Iterable[dict]:
         """
-        read udev log from /var/log/udev-disks.log
+        read udev log from /var/log/udev-android.log
         """
         return self._read_udev_log("/var/log/udev-android.log", {
             "serial": lambda x: x.get("ID_SERIAL_SHORT"),
@@ -109,7 +109,7 @@ class LinuxNative(AbstractOS):
         """
         read udev log from /var/log/udev-all.log
         """
-        return self._read_udev_log("/var/log/udev-android.log", {
+        return self._read_udev_log("/var/log/udev-all.log", {
             "serial": lambda x: x.get("ID_SERIAL_SHORT"),
             "manufacture": lambda x: x.get("ID_VENDOR_FROM_DATABASE"),
             "device_name": lambda x: x.get("ID_MODEL"),
