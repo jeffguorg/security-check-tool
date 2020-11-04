@@ -42,18 +42,18 @@ def run_methods(selected_methods: list):
     if selected_methods is None:
         selected_methods = obj_methods
     total_count = len(selected_methods)
-    implement_methods = []
+    ok_methods = []
     failed_methods = []
     for i, method_name in enumerate(selected_methods):
         i += 1
         assert (method_name in obj_methods)
         try:
             spent_ms, result_count = run_instance_method(method_name)
-            implement_methods.append((i, method_name, spent_ms, f'{result_count} items'))
+            ok_methods.append((i, method_name, spent_ms, f'{result_count} items'))
         except Exception as ex:
             traceback.print_exc()
             failed_methods.append((i, method_name, ex))
     dump_results(failed_methods, False)
-    dump_results(implement_methods, True)
-    implement_count = len(implement_methods)
-    print(f"{implement_count} of {total_count} has implemented {implement_count * 100 / total_count}%")
+    dump_results(ok_methods, True)
+    ok_count = len(ok_methods)
+    print(f"{ok_count} of {total_count} executed successfully {ok_count * 100 / total_count}%")
