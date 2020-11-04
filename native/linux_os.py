@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import getpass
 import configparser
 import re
+import json
 
 import subprocess
 import shlex
@@ -40,7 +41,52 @@ class LinuxNative(AbstractOS):
                 "modify_time": datetime.fromtimestamp(stat.st_mtime)
             }
 
+    def _read_udev_log(self, filename, value_maps):
+        with open("/var/log/udev-disks.log") as fp:
+            for line in fp.readlines():
+                record = json.loads(line)
+
+                result = dict()
+                for k, v in value_maps.items():
+                    result.update({
+                        k: v(record)
+                    })
+                yield result
+
+
     def get_usb_storage_device_using_records(self) -> Iterable[dict]:
+        """
+        read udev log from /var/log/udev-disks.log
+        """
+        return self._read_udev_log("/var/log/udev-disks.log", {
+            "serial": lambda x: x.get("ID_SERIAL_SHORT"),
+            "device_name": lambda x: x.get("ID_MODEL"),
+            "last_plugin_time": lambda x: datetime.fromisoformat(x["time"]),
+        })
+
+    def get_cell_phone_records(self) -> Iterable[dict]:
+        """
+        read udev log from /var/log/udev-disks.log
+        """
+        return self._read_udev_log("/var/log/udev-android.log", {
+            "serial": lambda x: x.get("ID_SERIAL_SHORT"),
+            "manufacture": lambda x: x.get("ID_VENDOR_FROM_DATABASE"),
+            "device_name": lambda x: x.get("ID_MODEL"),
+            "last_plugin_time": lambda x: datetime.fromisoformat(x["time"]),
+        })
+
+    def get_all_usb_device_records(self) -> Iterable[dict]:
+        """
+        read udev log from /var/log/udev-all.log
+        """
+        return self._read_udev_log("/var/log/udev-android.log", {
+            "serial": lambda x: x.get("ID_SERIAL_SHORT"),
+            "manufacture": lambda x: x.get("ID_VENDOR_FROM_DATABASE"),
+            "device_name": lambda x: x.get("ID_MODEL"),
+            "last_plugin_time": lambda x: datetime.fromisoformat(x["time"]),
+        })
+        
+    def _obsolete_get_usb_storage_device_using_records(self) -> Iterable[dict]:
         """
         it is tricky to get storage devices log. a common pattern for usb storage device is:
             [  966.555258] usb 1-4: USB disconnect, device number 7
@@ -119,12 +165,9 @@ class LinuxNative(AbstractOS):
                     }
                     devices.pop(device_id)
                     last_occurances.pop(device_id)
+                }
 
-
-    def get_cell_phone_records(self) -> Iterable[dict]:
-        pass
-
-    def get_all_usb_device_records(self) -> Iterable[dict]:
+    def _obsolete_get_all_usb_device_records(self) -> Iterable[dict]:
         # get uptime
         with open("/proc/uptime") as fp:
             uptime_content = fp.read()

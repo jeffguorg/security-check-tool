@@ -1,0 +1,1 @@
+ACTION=="add", RUN+="/usr/local/bin/log-udev --output /var/log/udev-all.log"

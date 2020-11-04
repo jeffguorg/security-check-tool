@@ -1,0 +1,22 @@
+#!/usr/bin/python3
+
+import os
+import argparse
+import json
+import datetime
+
+
+def args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", default="/tmp/udev.log")
+    return parser.parse_args()
+
+def main(ns):
+    with open(ns.output, "a+") as fp:
+        record = dict(os.environ)
+        record.update(time=datetime.datetime.now().isoformat())
+        print(json.dumps(record), file=fp)
+
+
+if __name__ == "__main__":
+    main(args())
