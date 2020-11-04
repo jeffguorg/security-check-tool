@@ -1,5 +1,4 @@
 from sys import platform as os_name
-
 from abstract_os import AbstractOS
 
 
@@ -22,7 +21,6 @@ class NativeOS(AbstractOS):
         else:
             raise NotImplementedError(os_name)
         return self._instance
-
 
 if __name__ == '__main__':
     # s = NativeOS.instance().list_removable_drives()

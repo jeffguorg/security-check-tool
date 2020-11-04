@@ -1,1 +1,4 @@
-fill in the depends here
+pypiwin32
+winshell
+wmi
+psutil
