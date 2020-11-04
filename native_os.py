@@ -26,5 +26,20 @@ class NativeOS(AbstractOS):
 
 if __name__ == '__main__':
     # s = NativeOS.instance().list_removable_drives()
-    for i in NativeOS().instance().get_usb_storage_device_using_records():
-        print(i)
+    #for i in NativeOS().instance().get_usb_storage_device_using_records():
+    #    print(i)
+    os = NativeOS().instance()
+    import sys
+    
+    
+    if len(sys.argv) >= 2:
+        cmd = sys.argv[1]
+        args = sys.argv[2:]
+        
+        if hasattr(os, cmd):
+            result = getattr(os, cmd)(*args)
+            try:
+                for item in result:
+                    print(item)
+            except:
+                print(result)
