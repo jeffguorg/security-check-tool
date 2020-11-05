@@ -13,6 +13,7 @@ import win32evtlog
 import winerror
 import win32con
 import psutil
+from ctypes import c_wchar_p, windll
 
 
 class WindowsNative(AbstractOS):
@@ -291,8 +292,15 @@ class WindowsNative(AbstractOS):
 
         wmi = GetObject('winmgmts:/root/cimv2')
         processes = wmi.ExecQuery('SELECT * FROM Win32_Service')
-
-        for s in processes:
+        
+        for s in processes:   
+            file_path=s.PathName
+            try:
+                CryptQueryObject=windll.LoadLibrary("Crypt32.dll").CryptQueryObject
+                path=file_path[:(file_path.find(".exe")+4)]
+                bResult=CryptQueryObject(1,c_wchar_p(path),1024,2,0,None,None,None,None,None,None)
+            except:
+                pass
             is_system_service = 'true' if s.ServiceType == "Own Process" else 'false'
             yield {
                 "name": s.Name,
@@ -301,8 +309,11 @@ class WindowsNative(AbstractOS):
                 "process_id": s.ProcessId,
                 "file_path": s.PathName,
                 "status": s.State,
-                "is_system_service": is_system_service
+                "is_system_service": is_system_service,
+                "is_signed":bool(int(bResult))
+
             }
+    
 
     def get_current_network_records(self) -> Iterable[dict]:
 
