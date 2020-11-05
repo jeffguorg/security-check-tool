@@ -19,18 +19,18 @@ class WindowsNative(AbstractOS):
     def get_file_access_records(self) -> Iterable[dict]:
 
         direction = os.environ.get(
-            "USERPROFILE")+'\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\'
+            "USERPROFILE") + '\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\'
         file_lists = os.listdir(direction)
         for i in range(len(file_lists)):
             record = {}
             try:
                 shell = win32com.client.Dispatch("WScript.Shell")
-                shortcut = shell.CreateShortCut(direction+file_lists[i])
+                shortcut = shell.CreateShortCut(direction + file_lists[i])
                 record["username"] = direction.split("\\")[2]
                 record["access_time"] = str(datetime.datetime.utcfromtimestamp(
-                    int(os.path.getatime(direction+file_lists[i]))))
+                    int(os.path.getatime(direction + file_lists[i]))))
                 record["file_path"] = shortcut.Targetpath
-                if shortcut.Targetpath=="" :
+                if shortcut.Targetpath == "":
                     continue
                 record["is_exists"] = os.path.exists(shortcut.Targetpath)
                 yield record
@@ -38,26 +38,26 @@ class WindowsNative(AbstractOS):
                 pass
 
     def get_deleted_files_records(self) -> Iterable[dict]:
-        records=list(ws.recycle_bin())
-        if len(records)==0:
+        records = list(ws.recycle_bin())
+        if len(records) == 0:
             return "Empty Recycle Bin"
 
         for i in range(len(records)):
-            record={}
-            record["file_path"]=str(records[i].original_filename())
+            record = {}
+            record["file_path"] = str(records[i].original_filename())
             try:
-                record["create_time"]=str(records[i].getctime())[:19]
-                record["modify_time"]=str(records[i].getmtime())[:19]
+                record["create_time"] = str(records[i].getctime())[:19]
+                record["modify_time"] = str(records[i].getmtime())[:19]
             except Exception:
                 # 回收站内文件夹无法打开
-                record["create_time"]=str(records[i].recycle_date())[:19]
-                record["modify_time"]=str(records[i].recycle_date())[:19]
+                record["create_time"] = str(records[i].recycle_date())[:19]
+                record["modify_time"] = str(records[i].recycle_date())[:19]
             yield record
 
     def get_usb_storage_device_using_records(self):
 
         timestamp = (datetime.datetime(1601, 1, 1) -
-                    datetime.datetime(1970, 1, 1)).total_seconds()
+                     datetime.datetime(1970, 1, 1)).total_seconds()
         regRoot = ConnectRegistry(None, HKEY_LOCAL_MACHINE)
         subDir = r"SYSTEM\CurrentControlSet\Enum\USBSTOR"
         keyHandle = OpenKey(regRoot, subDir)
@@ -78,18 +78,17 @@ class WindowsNative(AbstractOS):
                 for k in range(numKey):
                     record = {}
                     name, value, type_ = EnumValue(keyHandle_3, k)
-                    if(('Service' in name) and ('disk' in value)):
-
+                    if (('Service' in name) and ('disk' in value)):
                         device_name, type_ = QueryValueEx(
                             keyHandle_3, 'FriendlyName')
-                        serials = subKeyName_2
+                        serilas = subKeyName_2
                         manufacture = device_name.split(" ")[0]
                         description, type_ = QueryValueEx(
                             keyHandle_3, 'DeviceDesc')
                         last_plugin_time = str(datetime.datetime.fromtimestamp(
-                            int(QueryInfoKey(keyHandle_3)[2]*0.0000001+timestamp)))
+                            int(QueryInfoKey(keyHandle_3)[2] * 0.0000001 + timestamp)))
                         record["device_name"] = device_name
-                        record["serials"] = serials[:-2]
+                        record["serials"] = serilas[:-2]
                         record["manufacture"] = manufacture
                         record["description"] = str(
                             description.split(";")[1:])[1:-1]
@@ -102,7 +101,7 @@ class WindowsNative(AbstractOS):
     def get_cell_phone_records(self) -> Iterable[dict]:
 
         timestamp = (datetime.datetime(1601, 1, 1) -
-                    datetime.datetime(1970, 1, 1)).total_seconds()
+                     datetime.datetime(1970, 1, 1)).total_seconds()
         regRoot = ConnectRegistry(None, HKEY_LOCAL_MACHINE)
         subDir = r"SYSTEM\CurrentControlSet\Enum\USB"
         keyHandle = OpenKey(regRoot, subDir)
@@ -123,15 +122,16 @@ class WindowsNative(AbstractOS):
                 for k in range(numKey):
                     record = {}
                     name, value, type_ = EnumValue(keyHandle_3, k)
-                    if(('Service' in name) and ('WUDF' in value)):
+                    if (('Service' in name) and ('WUDF' in value)):
                         try:
-                            device_name, type_ = QueryValueEx( keyHandle_3, 'FriendlyName')
+                            device_name, type_ = QueryValueEx(keyHandle_3, 'FriendlyName')
                             manufacture, type_ = QueryValueEx(keyHandle_3, 'Mfg')
                             storage, type_ = QueryValueEx(keyHandle_3, 'Capabilities')
-                            last_plugin_time = str(datetime.datetime.fromtimestamp(int(QueryInfoKey(keyHandle_3)[2]*0.0000001+timestamp)))
+                            last_plugin_time = str(datetime.datetime.fromtimestamp(
+                                int(QueryInfoKey(keyHandle_3)[2] * 0.0000001 + timestamp)))
                             record["device_name"] = device_name
                             record["manufacture"] = manufacture
-                            record["storage"] = str(storage)+"GB"
+                            record["storage"] = str(storage) + "GB"
                             record["last_plugin_time"] = last_plugin_time
 
                             yield record
@@ -174,7 +174,8 @@ class WindowsNative(AbstractOS):
                             description, type_ = QueryValueEx(keyHandle_3, 'DeviceDesc')
                         record["name"] = name1.split(";")[-1].replace("(", "").replace(")", "")
                         record["manufacture"] = manufacture.split(";")[-1].replace("(", "").replace(")", "")
-                        record["description"] = description.split(";")[-1].split(";")[-1].replace("(", "").replace(")", "")
+                        record["description"] = description.split(";")[-1].split(";")[-1].replace("(", "").replace(")",
+                                                                                                                   "")
                         record["V_P_ID"] = subKeyName.split(";")[-1]
                         yield record
                 except:
@@ -185,11 +186,11 @@ class WindowsNative(AbstractOS):
     def get_installed_anti_virus_software_records(self) -> Iterable[dict]:
 
         sub_key = [r'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
-                r'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall']
+                   r'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall']
 
         for i in sub_key:
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,i, 0, winreg.KEY_READ)
-            for j in range(0, winreg.QueryInfoKey(key)[0]-1):
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, i, 0, winreg.KEY_READ)
+            for j in range(0, winreg.QueryInfoKey(key)[0] - 1):
                 softwareInfo = {}
                 try:
                     key_name = winreg.EnumKey(key, j)
@@ -219,35 +220,36 @@ class WindowsNative(AbstractOS):
 
                     # 主流杀软
                     try:
-                        if install_path.index("360Safe"):   # 360安全
+                        if install_path.index("360Safe"):  # 360安全
                             yield softwareInfo
                     except:
                         pass
                     try:
-                        if install_path.index("Kaspersky"):    # 卡巴斯基
+                        if install_path.index("Kaspersky"):  # 卡巴斯基
                             yield softwareInfo
                     except:
                         pass
                     try:
-                        if install_path.index("Rising"):   # 瑞星
+                        if install_path.index("Rising"):  # 瑞星
                             yield softwareInfo
                     except:
                         pass
                     try:
-                        if install_path.index("KWatch"):   # 金山
+                        if install_path.index("KWatch"):  # 金山
                             yield softwareInfo
                     except:
                         pass
-                
+
                 except WindowsError:
                     pass
 
     def get_installed_software_records(self) -> Iterable[dict]:
 
-        sub_key = [r'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',r'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall']
+        sub_key = [r'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
+                   r'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall']
         for i in sub_key:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, i, 0, winreg.KEY_READ)
-            for j in range(0, winreg.QueryInfoKey(key)[0]-1):
+            for j in range(0, winreg.QueryInfoKey(key)[0] - 1):
                 softwareInfo = {}
                 try:
                     key_name = winreg.EnumKey(key, j)
@@ -276,7 +278,7 @@ class WindowsNative(AbstractOS):
                                 raise WindowsError
                         except:
                             install_path, REG_SZ = winreg.QueryValueEx(each_key, 'UninstallString')
-                            install_path = os.path.dirname(install_path)+"\\"
+                            install_path = os.path.dirname(install_path) + "\\"
                     softwareInfo["name"] = name
                     softwareInfo["publisher"] = Publisher
                     softwareInfo["version"] = version
@@ -312,13 +314,13 @@ class WindowsNative(AbstractOS):
             li = [i for i in li[:-1].split(" ") if i != '']
             netstat["protocol"] = li[0]
             netstat["local_ip"] = li[1][: li[1].rfind(':')]
-            netstat["local_port"] = li[1][li[1].rfind(':')+1:]
+            netstat["local_port"] = li[1][li[1].rfind(':') + 1:]
             if "*" in li[2]:
                 netstat["remote_ip"] = li[2]
                 netstat["remote_port"] = ""
             else:
                 netstat["remote_ip"] = li[1][: li[1].rfind(':')]
-                netstat["remote_port"] = li[2][li[1].rfind(':')+1:]
+                netstat["remote_port"] = li[2][li[1].rfind(':') + 1:]
             pid = int(li[-1])
             if pid == 0:
                 netstat["program_path"] = ""
@@ -329,7 +331,7 @@ class WindowsNative(AbstractOS):
                     netstat["status"] = psutil.Process(pid).status()
                 except:
                     continue
-            try:    
+            try:
                 netstat["process_name"] = psutil.Process(pid).name()
             except:
                 continue
@@ -351,37 +353,33 @@ class WindowsNative(AbstractOS):
                         win32con.EVENTLOG_INFORMATION_TYPE: 'info',
                         win32con.EVENTLOG_WARNING_TYPE: 'waring',
                         win32con.EVENTLOG_ERROR_TYPE: 'error'}
-            try:
-                events = 1
-                while events:
-                    events = win32evtlog.ReadEventLog(hand, flags, 0)
+            events = 1
+            while events:
+                events = win32evtlog.ReadEventLog(hand, flags, 0)
 
-                    for ev_obj in events:
-                        infoTemp = {}
+                for ev_obj in events:
+                    infoTemp = {}
 
-                        if not ev_obj.EventType in evt_dict.keys():
-                            evt_type = "unknown"
-                        else:
-                            evt_type = str(evt_dict[ev_obj.EventType])
-                        infoTemp["log_type"] = logtype
-                        infoTemp["time"] = ev_obj.TimeGenerated.Format()
-                        infoTemp["event"] = str(
-                            winerror.HRESULT_CODE(ev_obj.EventID))
-                        infoTemp["log_source"] = str(ev_obj.SourceName)
-                        try:
-                            infoTemp["description"] = ",".join(
-                                ev_obj.StringInserts[:1])
-                        except:
-                            infoTemp["description"] = str(
-                                ev_obj.StringInserts)[1:-1]
+                    if not ev_obj.EventType in evt_dict.keys():
+                        evt_type = "unknown"
+                    else:
+                        evt_type = str(evt_dict[ev_obj.EventType])
+                    infoTemp["log_type"] = logtype
+                    infoTemp["time"] = ev_obj.TimeGenerated.Format()
+                    infoTemp["event"] = str(
+                        winerror.HRESULT_CODE(ev_obj.EventID))
+                    infoTemp["log_source"] = str(ev_obj.SourceName)
+                    try:
+                        infoTemp["description"] = ",".join(
+                            ev_obj.StringInserts[:1])
+                    except:
+                        infoTemp["description"] = str(
+                            ev_obj.StringInserts)[1:-1]
 
-                        infoTemp["computer_name"] = str(ev_obj.ComputerName)
-                        infoTemp["log_kind"] = str(evt_type)
+                    infoTemp["computer_name"] = str(ev_obj.ComputerName)
+                    infoTemp["log_kind"] = str(evt_type)
+                    yield infoTemp
 
-                        yield infoTemp
-
-            except:
-                print(traceback.print_exc(sys.exc_info()))
 
     def get_power_of_records(self) -> Iterable[dict]:
         server = "localhost"
@@ -428,79 +426,77 @@ class WindowsNative(AbstractOS):
                 pass
 
         for sign_one in sign:
-            temp = os.popen('net share '+sign_one).readlines()
+            temp = os.popen('net share ' + sign_one).readlines()
             temp1 = []
             k = 0
             for li in temp:
                 li = [i for i in li[:-1].split(" ") if i != '']
                 if k == 0 or k == 1 or k == 2 or k == 4:
                     temp1.append(li)
-                k = k+1
+                k = k + 1
 
             yield {
-
-                "name": temp1[0][1],
+                "name": temp1[0][-1],
                 "path": "" if len(temp1[1]) == 1 else temp1[1][1],
                 "description": "".join(temp1[2][1:]),
-                "connections_count": len(temp1[3])-1,
+                "connections_count": len(temp1[2]) - 1,
             }
-
 
     def get_strategy_records(self) -> Iterable[dict]:
 
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon") 
-        is_auto_login=False
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon")
+        is_auto_login = False
         user = ""
         try:
             DefaultUserName, type = winreg.QueryValueEx(key, "DefaultUserName")
             AutoAdminLogon, type = winreg.QueryValueEx(key, "AutoAdminLogon")
-            if AutoAdminLogon=="0":
-                is_auto_login=False
-                user=""
+            if AutoAdminLogon == "0":
+                is_auto_login = False
+                user = ""
             else:
-                is_auto_login=True
-                user=DefaultUserName
+                is_auto_login = True
+                user = DefaultUserName
         except:
-            is_auto_login=False
-            user=""
+            is_auto_login = False
+            user = ""
 
         yield {
-            "is_auto_login":is_auto_login,
-            "user":user,
+            "is_auto_login": is_auto_login,
+            "user": user,
         }
 
     def get_users_groups_records(self) -> Iterable[dict]:
         sign_list = os.popen('net localgroup  ').readlines()
-        
-        sign=[]
+
+        sign = []
 
         for li in sign_list:
             sign.append(li[0:-1])
         for li in sign[4:-2]:
-      
-            info_list = os.popen('net localgroup '+"\""+str(li[1:])+"\"").readlines()
-  
-            groups=[]
-            for one_group in info_list :
+
+            info_list = os.popen('net localgroup ' + "\"" + str(li[1:]) + "\"").readlines()
+
+            groups = []
+            for one_group in info_list:
                 one_group = [i for i in one_group[:-1].split(" ") if i != '']
                 groups.append(one_group)
-            record=[]
+            record = []
             for k in range(len(groups[0:-2])):
-                if "------" in str(groups[0:-2][-k-1]):
+                if "------" in str(groups[0:-2][-k - 1]):
                     break
                 else:
-                    record.append(" ".join(groups[0:-2][-k-1]))
+                    record.append(" ".join(groups[0:-2][-k - 1]))
 
             yield {
-                "group_name":li[1:],
-                "description":groups[1][1],
-                "members":record if len(record)!=0 else "" 
+                "group_name": li[1:],
+                "description": groups[1][1],
+                "members": record if len(record) != 0 else ""
 
             }
 
     def get_hardware_records(self) -> Iterable[dict]:
         wmi = GetObject('winmgmts:/root/cimv2')
-        device_list= {
+        device_list = {
             "CPU 处理器": "Win32_Processor",
             "主板": "Win32_BaseBoard",
             "BIOS": "Win32_BIOS",
@@ -511,24 +507,24 @@ class WindowsNative(AbstractOS):
             "IDE": "Win32_IDEController",
         }
 
-        for k, v in device_list.items():  
-            for u in wmi.ExecQuery("SELECT * FROM "+v):
+        for k, v in device_list.items():
+            for u in wmi.ExecQuery("SELECT * FROM " + v):
                 if u.Caption == u.Name:
-                    info= u.Caption
+                    info = u.Caption
                     try:
-                        info = u.Caption+" " + str(int(u.Capacity)/(2**30))[0:3] + "GB"
+                        info = u.Caption + " " + str(int(u.Capacity) / (2 ** 30))[0:3] + "GB"
                     except:
                         try:
-                            info = u.Caption+" " + str(int(u.Size)/(2**30))[0:3] + "GB"
+                            info = u.Caption + " " + str(int(u.Size) / (2 ** 30))[0:3] + "GB"
                         except:
                             pass
                 else:
-                    info= u.Caption+" "+u.Name
+                    info = u.Caption + " " + u.Name
                     try:
-                        info = u.Caption+" "+u.Name + " " +  str(int(u.Capacity)/(2**30))[0:3] + "GB"
+                        info = u.Caption + " " + u.Name + " " + str(int(u.Capacity) / (2 ** 30))[0:3] + "GB"
                     except:
                         try:
-                            info = u.Caption+" " + str(int(u.Size)/(2**30))[0:3] + "GB"
+                            info = u.Caption + " " + str(int(u.Size) / (2 ** 30))[0:3] + "GB"
                         except:
                             pass
                 yield {
@@ -537,25 +533,25 @@ class WindowsNative(AbstractOS):
                 }
 
     def get_system_drives_records(self) -> Iterable[dict]:
-        timestamp = (datetime.datetime(1600, 1, 1) -datetime.datetime(1970, 1, 1)).total_seconds()
+        timestamp = (datetime.datetime(1600, 1, 1) - datetime.datetime(1970, 1, 1)).total_seconds()
         sub_key = r'SYSTEM\CurrentControlSet\Services'
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,sub_key, 0, winreg.KEY_READ)
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, sub_key, 0, winreg.KEY_READ)
 
-        for j in range(0, winreg.QueryInfoKey(key)[0]-1):
-            try :
+        for j in range(0, winreg.QueryInfoKey(key)[0] - 1):
+            try:
                 key_name = winreg.EnumKey(key, j)
                 key_path = sub_key + '\\' + key_name
                 each_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
                 try:
                     ImagePath, REG_SZ = winreg.QueryValueEx(each_key, 'ImagePath')
-                    if "driver" in ImagePath :
+                    if "driver" in ImagePath:
                         DisplayName, REG_SZ = winreg.QueryValueEx(each_key, 'DisplayName')
                         try:
                             Description, REG_SZ = winreg.QueryValueEx(each_key, 'Description')
                         except:
-                            Description=""
+                            Description = ""
                         if "\\" in DisplayName:
-                            DisplayName=DisplayName.split("\\")[-1]
+                            DisplayName = DisplayName.split("\\")[-1]
                         if ";" in DisplayName:
                             DisplayName = DisplayName.split(";")[-1]
                         if "\\" in Description:
@@ -563,11 +559,11 @@ class WindowsNative(AbstractOS):
                         if ";" in Description:
                             Description = Description.split(";")[-1]
                         time = str(datetime.datetime.fromtimestamp(
-                            int(winreg.QueryInfoKey(each_key)[2]*0.0000001+timestamp)))
+                            int(winreg.QueryInfoKey(each_key)[2] * 0.0000001 + timestamp)))
 
                         yield {
                             "name": DisplayName,
-                            "install_time":time,
+                            "install_time": time,
                             "description": Description,
                         }
 
