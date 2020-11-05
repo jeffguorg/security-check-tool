@@ -44,7 +44,7 @@ class WindowsNative(AbstractOS):
 
         for i in range(len(records)):
             record={}
-            record["filepath"]=str(records[i].original_filename())
+            record["file_path"]=str(records[i].original_filename())
             try:
                 record["create_time"]=str(records[i].getctime())[:19]
                 record["modify_time"]=str(records[i].getmtime())[:19]
@@ -82,14 +82,14 @@ class WindowsNative(AbstractOS):
 
                         device_name, type_ = QueryValueEx(
                             keyHandle_3, 'FriendlyName')
-                        serilas = subKeyName_2
+                        serials = subKeyName_2
                         manufacture = device_name.split(" ")[0]
                         description, type_ = QueryValueEx(
                             keyHandle_3, 'DeviceDesc')
                         last_plugin_time = str(datetime.datetime.fromtimestamp(
                             int(QueryInfoKey(keyHandle_3)[2]*0.0000001+timestamp)))
                         record["device_name"] = device_name
-                        record["serilas"] = serilas[:-2]
+                        record["serials"] = serials[:-2]
                         record["manufacture"] = manufacture
                         record["description"] = str(
                             description.split(";")[1:])[1:-1]
