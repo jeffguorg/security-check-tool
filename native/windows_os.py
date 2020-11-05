@@ -451,14 +451,133 @@ class WindowsNative(AbstractOS):
 
 
     def get_strategy_records(self) -> Iterable[dict]:
-        pass
+
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon") 
+        is_auto_login=False
+        user = ""
+        try:
+            DefaultUserName, type = winreg.QueryValueEx(key, "DefaultUserName")
+            AutoAdminLogon, type = winreg.QueryValueEx(key, "AutoAdminLogon")
+            if AutoAdminLogon=="0":
+                is_auto_login=False
+                user=""
+            else:
+                is_auto_login=True
+                user=DefaultUserName
+        except:
+            is_auto_login=False
+            user=""
+
+        yield {
+            "is_auto_login":is_auto_login,
+            "user":user,
+        }
 
     def get_users_groups_records(self) -> Iterable[dict]:
-        pass
+        sign_list = os.popen('net localgroup  ').readlines()
+        
+        sign=[]
+
+        for li in sign_list:
+            sign.append(li[0:-1])
+        for li in sign[4:-2]:
+            a=time.time()
+            info_list = os.popen('net localgroup '+"\""+str(li[1:])+"\"").readlines()
+            print(time.time()-a)
+            groups=[]
+            for one_group in info_list :
+                one_group = [i for i in one_group[:-1].split(" ") if i != '']
+                groups.append(one_group)
+            record=[]
+            for k in range(len(groups[0:-2])):
+                if "------" in str(groups[0:-2][-k-1]):
+                    break
+                else:
+                    record.append(" ".join(groups[0:-2][-k-1]))
+
+            yield {
+                "group_name":li[1:],
+                "description":groups[1][1],
+                "members":record if len(record)!=0 else "" 
+
+            }
 
     def get_hardware_records(self) -> Iterable[dict]:
-        pass
+        wmi = GetObject('winmgmts:/root/cimv2')
+        device_list= {
+            "CPU 处理器": "Win32_Processor",
+            "主板": "Win32_BaseBoard",
+            "BIOS": "Win32_BIOS",
+            "硬盘": "Win32_DiskDrive",
+            "内存": "Win32_PhysicalMemory",
+            "电池": "Win32_Battery",
+            "风扇": "Win32_Fan",
+            "IDE": "Win32_IDEController",
+        }
+
+        for k, v in device_list.items():  
+            for u in wmi.ExecQuery("SELECT * FROM "+v):
+                if u.Caption == u.Name:
+                    info= u.Caption
+                    try:
+                        info = u.Caption+" " + str(int(u.Capacity)/(2**30))[0:3] + "GB"
+                    except:
+                        try:
+                            info = u.Caption+" " + str(int(u.Size)/(2**30))[0:3] + "GB"
+                        except:
+                            pass
+                else:
+                    info= u.Caption+" "+u.Name
+                    try:
+                        info = u.Caption+" "+u.Name + " " +  str(int(u.Capacity)/(2**30))[0:3] + "GB"
+                    except:
+                        try:
+                            info = u.Caption+" " + str(int(u.Size)/(2**30))[0:3] + "GB"
+                        except:
+                            pass
+                yield {
+                    "kind": k,
+                    "info": info
+                }
 
     def get_system_drives_records(self) -> Iterable[dict]:
-        pass
+        timestamp = (datetime.datetime(1600, 1, 1) -datetime.datetime(1970, 1, 1)).total_seconds()
+        sub_key = r'SYSTEM\CurrentControlSet\Services'
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,sub_key, 0, winreg.KEY_ALL_ACCESS)
+
+        for j in range(0, winreg.QueryInfoKey(key)[0]-1):
+            try :
+                key_name = winreg.EnumKey(key, j)
+                key_path = sub_key + '\\' + key_name
+                each_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS)
+                try:
+                    ImagePath, REG_SZ = winreg.QueryValueEx(each_key, 'ImagePath')
+                    if "driver" in ImagePath :
+                        DisplayName, REG_SZ = winreg.QueryValueEx(each_key, 'DisplayName')
+                        try:
+                            Description, REG_SZ = winreg.QueryValueEx(each_key, 'Description')
+                        except:
+                            Description=""
+                        if "\\" in DisplayName:
+                            DisplayName=DisplayName.split("\\")[-1]
+                        if ";" in DisplayName:
+                            DisplayName = DisplayName.split(";")[-1]
+                        if "\\" in Description:
+                            Description = Description.split("\\")[-1]
+                        if ";" in Description:
+                            Description = Description.split(";")[-1]
+                        time = str(datetime.datetime.fromtimestamp(
+                            int(winreg.QueryInfoKey(each_key)[2]*0.0000001+timestamp)))
+
+                        yield {
+                            "name": DisplayName,
+                            "install_time":time,
+                            "description": Description,
+                        }
+
+                except:
+                    pass
+            except:
+                # 保护位置，无法访问
+                pass
 
