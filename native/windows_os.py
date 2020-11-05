@@ -481,9 +481,9 @@ class WindowsNative(AbstractOS):
         for li in sign_list:
             sign.append(li[0:-1])
         for li in sign[4:-2]:
-            a=time.time()
+      
             info_list = os.popen('net localgroup '+"\""+str(li[1:])+"\"").readlines()
-            print(time.time()-a)
+  
             groups=[]
             for one_group in info_list :
                 one_group = [i for i in one_group[:-1].split(" ") if i != '']
@@ -543,13 +543,13 @@ class WindowsNative(AbstractOS):
     def get_system_drives_records(self) -> Iterable[dict]:
         timestamp = (datetime.datetime(1600, 1, 1) -datetime.datetime(1970, 1, 1)).total_seconds()
         sub_key = r'SYSTEM\CurrentControlSet\Services'
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,sub_key, 0, winreg.KEY_ALL_ACCESS)
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,sub_key, 0, winreg.KEY_READ)
 
         for j in range(0, winreg.QueryInfoKey(key)[0]-1):
             try :
                 key_name = winreg.EnumKey(key, j)
                 key_path = sub_key + '\\' + key_name
-                each_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS)
+                each_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
                 try:
                     ImagePath, REG_SZ = winreg.QueryValueEx(each_key, 'ImagePath')
                     if "driver" in ImagePath :
