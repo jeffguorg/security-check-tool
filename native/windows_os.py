@@ -30,32 +30,28 @@ class WindowsNative(AbstractOS):
                 record["access_time"] = str(datetime.datetime.utcfromtimestamp(
                     int(os.path.getatime(direction+file_lists[i]))))
                 record["file_path"] = shortcut.Targetpath
-                if os.path.exists(shortcut.Targetpath):
-                    record["is_exists"] = True
-                else:
-                    record["is_exists"] = False
-
+                if shortcut.Targetpath=="" :
+                    continue
+                record["is_exists"] = os.path.exists(shortcut.Targetpath)
                 yield record
             except:
                 pass
 
     def get_deleted_files_records(self) -> Iterable[dict]:
-
         records=list(ws.recycle_bin())
-
         if len(records)==0:
             return "Empty Recycle Bin"
+
         for i in range(len(records)):
             record={}
-
             record["filepath"]=str(records[i].original_filename())
             try:
-                record["create_time"]=str(records[i].getctime())[:-13]
-                record["modify_time"]=str(records[i].getmtime())[:-13]
+                record["create_time"]=str(records[i].getctime())[:19]
+                record["modify_time"]=str(records[i].getmtime())[:19]
             except Exception:
-                record["create_time"]=str(records[i].recycle_date())[:-6]
-                record["modify_time"]=str(records[i].recycle_date())[:-6]
-
+                # 回收站内文件夹无法打开
+                record["create_time"]=str(records[i].recycle_date())[:19]
+                record["modify_time"]=str(records[i].recycle_date())[:19]
             yield record
 
     def get_usb_storage_device_using_records(self):
