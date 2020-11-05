@@ -19,7 +19,7 @@ import shlex
 import pydbus
 from gi.repository import GLib
 import multiprocessing
-
+        
 
 
 class LinuxNative(AbstractOS):
@@ -160,7 +160,17 @@ class LinuxNative(AbstractOS):
 
 
     def get_services_records(self) -> Iterable[dict]:
-        pass
+        bus = pydbus.SystemBus()
+        systemd = bus.get(".systemd1")
+        units = systemd.ListUnits()
+        for name, description, load_state, active_state, sub_state, _, object_path, _, _, _ in units:
+            if name.endswith(".service"):
+                service = bus.get(".systemd1", object_path)
+                yield {
+                    "name": name,
+                    "display_name": description,
+                    "status": active_state,
+                }
 
     def get_current_network_records(self) -> Iterable[dict]:
         pass

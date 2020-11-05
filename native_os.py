@@ -39,5 +39,6 @@ if __name__ == '__main__':
             try:
                 for item in result:
                     print(item)
-            except:
+            except Exception as e:
+                print("unable to print seq: ", e)
                 print(result)
