@@ -1,17 +1,25 @@
 from typing import Iterable
 from abstract_os import AbstractOS
 
+
 from xml.etree import ElementTree
 from urllib.parse import unquote
+
+import getpass
 import os
 from datetime import datetime, timedelta
-import getpass
+
 import configparser
 import re
 import json
 
 import subprocess
 import shlex
+
+import pydbus
+from gi.repository import GLib
+import multiprocessing
+
 
 
 class LinuxNative(AbstractOS):
@@ -117,10 +125,39 @@ class LinuxNative(AbstractOS):
         })
 
     def get_installed_anti_virus_software_records(self) -> Iterable[dict]:
-        pass
+        return filter(lambda record: 'com.qihoo.360safe' == record.get("name"), self.get_installed_anti_virus_software_records())
 
     def get_installed_software_records(self) -> Iterable[dict]:
-        pass
+        packages = []
+        loop = GLib.MainLoop()
+
+        bus = pydbus.SystemBus()
+        packagekit = bus.get(".PackageKit")
+        transactionPath = packagekit.CreateTransaction()
+        transaction = bus.get(".PackageKit", transactionPath)
+
+        def onPackage(info, package, summary):
+            package_name, version, _, flags = package.split(";")
+            if 'installed' in flags.split(":"):
+                packages.append({
+                    "name": package_name,
+                    "version": version,
+                    "description": summary
+                })
+
+        def onFinished(*args, **kwargs):
+            loop.quit()
+
+        transaction.Package.connect(onPackage)
+        transaction.Finished.connect(onFinished)
+
+        transaction.GetPackages(3)
+
+
+        loop.run()
+        
+        return packages
+
 
     def get_services_records(self) -> Iterable[dict]:
         pass
