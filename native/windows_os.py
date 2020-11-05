@@ -225,15 +225,24 @@ class WindowsNative(AbstractOS):
                     try:
                         if install_path.index("360Safe"):   # 360安全
                             yield softwareInfo
-                        elif install_path.index("Kaspersky"):    # 卡巴斯基
-                            yield softwareInfo
-                        elif install_path.index("Rising"):   # 瑞星
-                            yield softwareInfo
-                        elif install_path.index("KWatch"):   # 金山
+                    except:
+                        pass
+                    try:
+                        if install_path.index("Kaspersky"):    # 卡巴斯基
                             yield softwareInfo
                     except:
                         pass
-
+                    try:
+                        if install_path.index("Rising"):   # 瑞星
+                            yield softwareInfo
+                    except:
+                        pass
+                    try:
+                        if install_path.index("KWatch"):   # 金山
+                            yield softwareInfo
+                    except:
+                        pass
+                
                 except WindowsError:
                     pass
 
@@ -319,9 +328,15 @@ class WindowsNative(AbstractOS):
                 netstat["program_path"] = ""
                 netstat["status"] = "TIME_WAIT"
             else:
-                netstat["program_path"] = psutil.Process(pid).exe()
-                netstat["status"] = psutil.Process(pid).status()
-            netstat["process_name"] = psutil.Process(pid).name()
+                try:
+                    netstat["program_path"] = psutil.Process(pid).exe()
+                    netstat["status"] = psutil.Process(pid).status()
+                except:
+                    continue
+            try:    
+                netstat["process_name"] = psutil.Process(pid).name()
+            except:
+                continue
             netstat["pid"] = pid
 
             yield netstat
