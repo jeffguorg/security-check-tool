@@ -60,7 +60,7 @@ class WindowsNative(AbstractOS):
 
     def get_usb_storage_device_using_records(self):
 
-        timestamp = (datetime.datetime(1600, 1, 1) -
+        timestamp = (datetime.datetime(1601, 1, 1) -
                     datetime.datetime(1970, 1, 1)).total_seconds()
         regRoot = ConnectRegistry(None, HKEY_LOCAL_MACHINE)
         subDir = r"SYSTEM\CurrentControlSet\Enum\USBSTOR"
@@ -105,7 +105,7 @@ class WindowsNative(AbstractOS):
 
     def get_cell_phone_records(self) -> Iterable[dict]:
 
-        timestamp = (datetime.datetime(1600, 1, 1) -
+        timestamp = (datetime.datetime(1601, 1, 1) -
                     datetime.datetime(1970, 1, 1)).total_seconds()
         regRoot = ConnectRegistry(None, HKEY_LOCAL_MACHINE)
         subDir = r"SYSTEM\CurrentControlSet\Enum\USB"
