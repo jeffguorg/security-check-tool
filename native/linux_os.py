@@ -1,5 +1,7 @@
 from typing import Iterable
 from abstract_os import AbstractOS
+import os
+import datetime
 
 
 class LinuxNative(AbstractOS):
@@ -43,10 +45,11 @@ class LinuxNative(AbstractOS):
         res = os.popen(
             "cat /etc/lightdm/lightdm.conf | grep ^autologin").readlines()
         res1 = "".join(res).split("=")
-
-        item = {"user" : "" , "is_auto_login" : False }
-
-        if len(res) == 0 :
+        item = {
+            "user": "",
+            "is_auto_login": False,
+        }
+        if len(res) == 0 or res1[-1] == "\n":
             yield item
         elif res1[-1] == "\n":
             yield item
@@ -55,7 +58,6 @@ class LinuxNative(AbstractOS):
                 "user": res1[-1][:-1],
                 "is_auto_login": True,
             }
-
 
     def get_users_groups_records(self) -> Iterable[dict]:
         res = os.popen("cat /etc/group").readlines()
@@ -69,7 +71,44 @@ class LinuxNative(AbstractOS):
 
 
     def get_hardware_records(self) -> Iterable[dict]:
-        pass
+        with open('/proc/cpuinfo') as fd:
+            for line in fd:
+                if line.startswith('model name'):
+                    cpu_model = line.split(':')[1].strip().split()
+                    cpu_model = cpu_model[0] + ' ' + \
+                        cpu_model[2] + ' ' + cpu_model[-1]
+                    yield {'kind': 'CPU 处理器', 'info': cpu_model.strip()}
+
+        with os.popen('sudo  fdisk -l') as fd:
+            for line in fd:
+                if line.startswith('Disk /dev'):
+                    cpu_model1 = line.split(':')[-1][:-1]
+                elif line.startswith('Disk model: '):
+                    cpu_model = line.split(':')[-1][:-1]+cpu_model1
+                    yield {'kind': "硬盘", 'info': cpu_model.strip()}
+
+        with os.popen('sudo dmidecode --type memory') as fd:
+            for line in fd:
+                line = line.strip()
+                if line.startswith('Size:'):
+                    if line == "Size: No Module Installed":
+                        continue
+                    else:
+                        yield {'kind': "内存", 'info': line.split(":")[-1].strip()}
+
+        with os.popen('sudo dmidecode -t 2') as fd:
+            for line in fd:
+                line = line.strip()
+                if line.startswith('Manufacturer'):
+                    cpu_model1 = line.split(':')[-1][:-1]
+                elif line.startswith('Product Name'):
+                    cpu_model = line.split(':')[-1][:-1]+cpu_model1
+                    yield {'kind': "主板", 'info': cpu_model.strip()}
+
+        with os.popen('sudo lspci | grep Eth') as fd:
+            for line in fd:
+                line = line.strip()
+                yield {'kind': "网卡", 'info': line.split(":")[-1].strip()}
 
     def get_system_drives_records(self) -> Iterable[dict]:
         path_list = []
