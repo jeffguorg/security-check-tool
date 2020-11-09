@@ -59,7 +59,7 @@ class LinuxNative(AbstractOS):
 
             yield {
                     "username": getpass.getuser(),
-                    "access_time": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                    "access_time": datetime.fromtimestamp(stat.st_ctime).strftime("%Y-%m-%d %H:%M:%S"),
                     "file_path": filepath,
                     "is_exists": os.path.exists(filepath)
             }
@@ -75,7 +75,7 @@ class LinuxNative(AbstractOS):
 
             yield {
                 "filepath": filepath,
-                "delete_time": datetime.fromisoformat(config['Trash Info']['DeletionDate']),
+                "delete_time": datetime.fromisoformat(config['Trash Info']['DeletionDate']).strftime("%Y-%m-%d %H:%M:%S"),
             }
 
     def _read_udev_log(self, filename, value_maps):
@@ -112,7 +112,7 @@ class LinuxNative(AbstractOS):
             "serial": lambda x: x.get("ID_SERIAL_SHORT"),
             "manufacture": lambda x: x.get("ID_VENDOR_FROM_DATABASE"),
             "device_name": lambda x: x.get("ID_MODEL"),
-            "last_plugin_time": lambda x: datetime.fromisoformat(x["time"]),
+            "last_plugin_time": lambda x: datetime.fromisoformat(x["time"]).strftime("%Y-%m-%d %H:%M:%S"),
         })
 
     def get_all_usb_device_records(self) -> Iterable[dict]:
@@ -123,7 +123,7 @@ class LinuxNative(AbstractOS):
             "serial": lambda x: x.get("ID_SERIAL_SHORT"),
             "manufacture": lambda x: x.get("ID_VENDOR_FROM_DATABASE"),
             "device_name": lambda x: x.get("ID_MODEL"),
-            "last_plugin_time": lambda x: datetime.fromisoformat(x["time"]),
+            "last_plugin_time": lambda x: datetime.fromisoformat(x["time"]).strftime("%Y-%m-%d %H:%M:%S"),
         })
 
     def get_installed_anti_virus_software_records(self) -> Iterable[dict]:
@@ -194,12 +194,12 @@ class LinuxNative(AbstractOS):
             for record in utmp.read(fp.read()):
                 if record.user == 'reboot':
                     yield dict(
-                        time=datetime.fromtimestamp(record.time),
+                        time=datetime.fromtimestamp(record.time).strftime("%Y-%m-%d %H:%M:%S"),
                         event= "power on",
                     )
                 elif record.user == 'shutdown':
                     yield dict(
-                        time=datetime.fromtimestamp(record.time),
+                        time=datetime.fromtimestamp(record.time).strftime("%Y-%m-%d %H:%M:%S"),
                         event= "power off",
                     )
 
