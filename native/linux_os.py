@@ -188,8 +188,20 @@ class LinuxNative(AbstractOS):
     def get_system_logs_records(self) -> Iterable[dict]:
         pass
 
-    def get_power_off_records(self) -> Iterable[dict]:
-        pass
+    def get_power_off_records(self, wtmp_path="/var/log/wtmp") -> Iterable[dict]:
+        import utmp
+        with open(wtmp_path, "rb") as fp:
+            for record in utmp.read(fp.read()):
+                if record.user == 'reboot':
+                    yield dict(
+                        time=datetime.fromtimestamp(record.time),
+                        event= "power on",
+                    )
+                elif record.user == 'shutdown':
+                    yield dict(
+                        time=datetime.fromtimestamp(record.time),
+                        event= "power off",
+                    )
 
     def get_sharing_settings_records(self) -> Iterable[dict]:
         pass
