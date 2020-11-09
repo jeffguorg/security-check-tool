@@ -125,7 +125,7 @@ class LinuxNative(AbstractOS):
         })
 
     def get_installed_anti_virus_software_records(self) -> Iterable[dict]:
-        return filter(lambda record: 'com.qihoo.360safe' == record.get("name"), self.get_installed_anti_virus_software_records())
+        return filter(lambda record: 'com.qihoo.360safe' == record.get("name"), self.get_installed_software_records())
 
     def get_installed_software_records(self) -> Iterable[dict]:
         packages = []
