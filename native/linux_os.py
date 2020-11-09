@@ -87,15 +87,6 @@ class LinuxNative(AbstractOS):
                     cpu_model = line.split(':')[-1][:-1]+cpu_model1
                     yield {'kind': "硬盘", 'info': cpu_model.strip()}
 
-        with os.popen('sudo dmidecode --type memory') as fd:
-            for line in fd:
-                line = line.strip()
-                if line.startswith('Size:'):
-                    if line == "Size: No Module Installed":
-                        continue
-                    else:
-                        yield {'kind': "内存", 'info': line.split(":")[-1].strip()}
-
         with os.popen('sudo dmidecode -t 2') as fd:
             for line in fd:
                 line = line.strip()
@@ -105,10 +96,16 @@ class LinuxNative(AbstractOS):
                     cpu_model = line.split(':')[-1][:-1]+cpu_model1
                     yield {'kind': "主板", 'info': cpu_model.strip()}
 
-        with os.popen('sudo lspci | grep Eth') as fd:
+        with os.popen('/sbin/ifconfig') as fd:
             for line in fd:
-                line = line.strip()
-                yield {'kind': "网卡", 'info': line.split(":")[-1].strip()}
+
+                if line.split(" ")[0]!="":
+                    name=line.split(":")[0]
+                if 'ether' in line:
+                    yield{
+                        "name":name,
+                        "address":line.split()[1]
+                    }
 
     def get_system_drives_records(self) -> Iterable[dict]:
         path_list = []
@@ -122,11 +119,10 @@ class LinuxNative(AbstractOS):
                     path_list.append(com_path)  # 如果该路径是文件，则追加到path_list中
             return path_list
 
-        path_list = get_all(path=r'/lib/modules/4.19.0-6-amd64/kernel/drivers')
+        path_list=get_all("/lib/modules/"+os.listdir("/lib/modules")[0]+"/kernel/drivers")
 
-        for i in range(len(path_list)):
-
+        for path in path_list:
             yield {
-                "name": path_list[i].split("/")[-1][:-3],
-                "install_time": str(datetime.datetime.fromtimestamp(os.stat(path_list[i]).st_ctime))[0:19]
+                "name":path.split("/")[-1][:-3],
+                "install_time": str(datetime.datetime.fromtimestamp(os.stat(path).st_ctime))[0:19]
             }
