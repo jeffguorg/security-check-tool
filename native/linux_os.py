@@ -198,7 +198,13 @@ class LinuxNative(AbstractOS):
         pass
 
     def get_users_groups_records(self) -> Iterable[dict]:
-        pass
+        import grp
+        return map(lambda g: dict(
+            group_id: g.gr_gid,
+            group_name: g.gr_name,
+            members: g.gr_mem,
+        ), grp.getgrall())
+
 
     def get_hardware_records(self) -> Iterable[dict]:
         pass
