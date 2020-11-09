@@ -188,7 +188,7 @@ class LinuxNative(AbstractOS):
     def get_system_logs_records(self) -> Iterable[dict]:
         pass
 
-    def get_power_of_records(self) -> Iterable[dict]:
+    def get_power_off_records(self) -> Iterable[dict]:
         pass
 
     def get_sharing_settings_records(self) -> Iterable[dict]:
@@ -209,7 +209,7 @@ class LinuxNative(AbstractOS):
     def get_hardware_records(self) -> Iterable[dict]:
         pass
 
-    def get_system_drives_records(self) -> Iterable[dict]:
+    def get_system_drivers_records(self) -> Iterable[dict]:
         pass
 
 
