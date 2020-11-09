@@ -221,7 +221,15 @@ class LinuxNative(AbstractOS):
     def get_hardware_records(self) -> Iterable[dict]:
         pass
 
-    def get_system_drivers_records(self) -> Iterable[dict]:
-        pass
+    def get_system_drivers_records(self, active_only=True) -> Iterable[dict]:
+        import kmodpy
+
+        kmod = kmodpy.Kmod()
+        for modname, _ in (kmod.loaded() if active_only else kmod.list()):
+            modinfo = dict((k.decode(), v.decode())for k, v in kmod.modinfo(modname))
+            yield dict(
+                name=modname,
+                description=modinfo.get("description", "")
+            )
 
 
