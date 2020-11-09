@@ -19,7 +19,9 @@ import shlex
 import pydbus
 from gi.repository import GLib
 import multiprocessing
+import subprocess as sp        
         
+import psutil
 
 
 class LinuxNative(AbstractOS):
