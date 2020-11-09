@@ -512,6 +512,7 @@ class WindowsNative(AbstractOS):
             "主板": "Win32_BaseBoard",
             "BIOS": "Win32_BIOS",
             "硬盘": "Win32_DiskDrive",
+            "网卡": "Win32_NetworkAdapter",
             "内存": "Win32_PhysicalMemory",
             "电池": "Win32_Battery",
             "风扇": "Win32_Fan",
