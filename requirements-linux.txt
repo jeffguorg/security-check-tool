@@ -1,1 +1,4 @@
 psutil
+
+# NOTE: pydbus need to be installed with system package manager along with python-gobject and gobject-introspection-runtime
+pydbus
