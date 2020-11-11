@@ -220,9 +220,9 @@ class LinuxNative(AbstractOS):
     def get_users_groups_records(self) -> Iterable[dict]:
         import grp
         return map(lambda g: dict(
-            group_id: g.gr_gid,
-            group_name: g.gr_name,
-            members: g.gr_mem,
+            group_id= g.gr_gid,
+            group_name= g.gr_name,
+            members= g.gr_mem,
         ), grp.getgrall())
 
 
