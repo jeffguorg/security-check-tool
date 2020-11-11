@@ -15,9 +15,8 @@ import json
 
 import subprocess
 import shlex
+import shutil
 
-import pydbus
-from gi.repository import GLib
 import multiprocessing
 import subprocess as sp        
         
@@ -34,57 +33,57 @@ class LinuxNative(AbstractOS):
     def get_file_access_records(self) -> Iterable[dict]:
         if os.path.isfile(RECENTUSED_XML_PATH):
             etree = ElementTree.parse(RECENTUSED_XML_PATH)
-        for bookmark in etree.findall("bookmark"):
-            if 'href' in bookmark.attrib:
-                href = bookmark.attrib['href']
-                if href.startswith("file://"):
-                    href = href[7:]
-                href = unquote(href)
-                yield {
-                    "username": getpass.getuser(),
-                    "access_time": bookmark.attrib['visited'],
-                    "file_path": href,
-                    "is_exists": os.path.exists(href)
-                }
+            for bookmark in etree.findall("bookmark"):
+                if 'href' in bookmark.attrib:
+                    href = bookmark.attrib['href']
+                    if href.startswith("file://"):
+                        href = href[7:]
+                    href = unquote(href)
+                    yield {
+                        "username": getpass.getuser(),
+                        "access_time": bookmark.attrib['visited'],
+                        "file_path": href,
+                        "is_exists": os.path.exists(href)
+                    }
         elif os.path.isdir(RECENTDOC_DIR_PATH):
             for desktop_file in os.listdir(RECENTDOC_DIR_PATH):
                 desktop_filepath = os.path.join(RECENTDOC_DIR_PATH, desktop_file)
-            config = configparser.ConfigParser()
-            config.read(desktop_filepath)
+                config = configparser.ConfigParser()
+                config.read(desktop_filepath)
 
-            stat = os.stat(desktop_filepath)
-            filepath = None
-            for k, v in config["Desktop Entry"].items():
-                if k.lower().startswith("url") and v.startswith("file:"):
-                    filepath = v.lstrip("file:")
+                stat = os.stat(desktop_filepath)
+                filepath = None
+                for k, v in config["Desktop Entry"].items():
+                    if k.lower().startswith("url") and v.startswith("file:"):
+                        filepath = v.lstrip("file:")
 
-            if filepath is None:
-                continue
+                if filepath is None:
+                    continue
 
-            filepath = os.path.expanduser(filepath)
-            filepath = os.path.expandvars(filepath)
+                filepath = os.path.expanduser(filepath)
+                filepath = os.path.expandvars(filepath)
 
-            yield {
-                    "username": getpass.getuser(),
-                    "access_time": datetime.fromtimestamp(stat.st_ctime).strftime("%Y-%m-%d %H:%M:%S"),
-                    "file_path": filepath,
-                    "is_exists": os.path.exists(filepath)
-            }
+                yield {
+                        "username": getpass.getuser(),
+                        "access_time": datetime.fromtimestamp(stat.st_ctime).strftime("%Y-%m-%d %H:%M:%S"),
+                        "file_path": filepath,
+                        "is_exists": os.path.exists(filepath)
+                }
 
 
     def get_deleted_files_records(self) -> Iterable[dict]:
         if os.path.isdir(TRASHFILE_DIR_PATH) and os.path.isdir(TRASHINFO_DIR_PATH):
             for filename in os.listdir(TRASHFILE_DIR_PATH):
                 info_filename = os.path.join(TRASHINFO_DIR_PATH, filename + ".trashinfo")
-            config = configparser.RawConfigParser()
-            config.read(info_filename)
+                config = configparser.RawConfigParser()
+                config.read(info_filename)
 
-            filepath = unquote(config['Trash Info']['Path'])
+                filepath = unquote(config['Trash Info']['Path'])
 
-            yield {
-                "filepath": filepath,
-                "delete_time": datetime.fromisoformat(config['Trash Info']['DeletionDate']).strftime("%Y-%m-%d %H:%M:%S"),
-            }
+                yield {
+                    "filepath": filepath,
+                    "delete_time": datetime.fromisoformat(config['Trash Info']['DeletionDate']).strftime("%Y-%m-%d %H:%M:%S"),
+                }
 
     def _read_udev_log(self, filename, value_maps):
         try:
@@ -138,36 +137,29 @@ class LinuxNative(AbstractOS):
         return filter(lambda record: 'com.qihoo.360safe' == record.get("name"), self.get_installed_software_records())
 
     def get_installed_software_records(self) -> Iterable[dict]:
-        packages = []
-        loop = GLib.MainLoop()
+        import shutil
+        dpkg = shutil.which("dpkg")
+        rpm = shutil.which("rpm")
 
-        bus = pydbus.SystemBus()
-        packagekit = bus.get(".PackageKit")
-        transactionPath = packagekit.CreateTransaction()
-        transaction = bus.get(".PackageKit", transactionPath)
-
-        def onPackage(info, package, summary):
-            package_name, version, _, flags = package.split(";")
-            if 'installed' in flags.split(":"):
-                packages.append({
-                    "name": package_name,
-                    "version": version,
-                    "description": summary
-                })
-
-        def onFinished(*args, **kwargs):
-            loop.quit()
-
-        transaction.Package.connect(onPackage)
-        transaction.Finished.connect(onFinished)
-
-        transaction.GetPackages(3)
-
-
-        loop.run()
+        proc = None
+        if dpkg is not None:
+            proc = sp.run(shlex.split("dpkg-query -W -f '---\\n${Package} ${Version}\\n${Description}\\n'"), stdout=sp.PIPE, stderr=sp.PIPE)
+        if rpm is not None:
+            proc = sp.run(shlex.split("rpm -qa --queryformat '---\\n%{name} %{version}-%{release}\\n%{description}\\n'"), stdout=sp.PIPE, stderr=sp.PIPE)
         
-        return packages
+        if proc is not None:
+            stdout = proc.stdout.decode()
+            packages = stdout.split("---")
+            for package in packages:
+                lines = list(filter(None, (package.strip() for package in package.splitlines())))
+                name, version = lines[0].strip().split()
+                description = "\n".join(lines[1:])
 
+                yield {
+                    "name": name,
+                    "version": version,
+                    "description": description,
+                }
 
     def get_services_records(self) -> Iterable[dict]:
         bus = pydbus.SystemBus()
