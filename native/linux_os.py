@@ -1,5 +1,7 @@
 from typing import Iterable
 from abstract_os import AbstractOS
+import os
+import datetime
 
 
 from xml.etree import ElementTree
@@ -207,7 +209,22 @@ class LinuxNative(AbstractOS):
         pass
 
     def get_strategy_records(self) -> Iterable[dict]:
-        pass
+        res = os.popen(
+            "cat /etc/lightdm/lightdm.conf | grep ^autologin").readlines()
+        res1 = "".join(res).split("=")
+        item = {
+            "user": "",
+            "is_auto_login": False,
+        }
+        if len(res) == 0 or res1[-1] == "\n":
+            yield item
+        elif res1[-1] == "\n":
+            yield item
+        else:
+            yield {
+                "user": res1[-1][:-1],
+                "is_auto_login": True,
+            }
 
     def get_users_groups_records(self) -> Iterable[dict]:
         import grp
@@ -219,7 +236,41 @@ class LinuxNative(AbstractOS):
 
 
     def get_hardware_records(self) -> Iterable[dict]:
-        pass
+        with open('/proc/cpuinfo') as fd:
+            for line in fd:
+                if line.startswith('model name'):
+                    cpu_model = line.split(':')[1].strip().split()
+                    cpu_model = cpu_model[0] + ' ' + \
+                        cpu_model[2] + ' ' + cpu_model[-1]
+                    yield {'kind': 'CPU 处理器', 'info': cpu_model.strip()}
+
+        with os.popen('sudo  fdisk -l') as fd:
+            for line in fd:
+                if line.startswith('Disk /dev'):
+                    cpu_model1 = line.split(':')[-1][:-1]
+                elif line.startswith('Disk model: '):
+                    cpu_model = line.split(':')[-1][:-1]+cpu_model1
+                    yield {'kind': "硬盘", 'info': cpu_model.strip()}
+
+        with os.popen('sudo dmidecode -t 2') as fd:
+            for line in fd:
+                line = line.strip()
+                if line.startswith('Manufacturer'):
+                    cpu_model1 = line.split(':')[-1][:-1]
+                elif line.startswith('Product Name'):
+                    cpu_model = line.split(':')[-1][:-1]+cpu_model1
+                    yield {'kind': "主板", 'info': cpu_model.strip()}
+
+        with os.popen('/sbin/ifconfig') as fd:
+            for line in fd:
+
+                if line.split(" ")[0]!="":
+                    name=line.split(":")[0]
+                if 'ether' in line:
+                    yield{
+                        "name":name,
+                        "address":line.split()[1]
+                    }
 
     def get_system_drivers_records(self, active_only=True) -> Iterable[dict]:
         import kmodpy
@@ -231,5 +282,4 @@ class LinuxNative(AbstractOS):
                 name=modname,
                 description=modinfo.get("description", "")
             )
-
 
