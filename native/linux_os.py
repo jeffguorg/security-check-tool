@@ -66,6 +66,7 @@ class LinuxNative(AbstractOS):
             group = res[i].split(":")
             yield{
                 "group_name": group[0],
+                "group_id":group[2],
                 "members": group[-1][:-1].split(",")
             }
 
@@ -110,19 +111,25 @@ class LinuxNative(AbstractOS):
     def get_system_drives_records(self) -> Iterable[dict]:
         path_list = []
         def get_all(path):
-            paths = os.listdir(path)  # 列出指定路径下的所有目录和文件
+            paths = os.listdir(path) 
             for i in paths:
                 com_path = os.path.join(path, i)
                 if os.path.isdir(com_path):
-                    get_all(com_path)  # 如果该路径是目录，则调用自身方法
+                    get_all(com_path)  
                 elif os.path.isfile(com_path):
-                    path_list.append(com_path)  # 如果该路径是文件，则追加到path_list中
+                    path_list.append(com_path)  
             return path_list
-
+        
         path_list=get_all("/lib/modules/"+os.listdir("/lib/modules")[0]+"/kernel/drivers")
-
         for path in path_list:
+            name= path.split("/")[-1][:-3]
+            with os.popen('modinfo '+name) as fd:
+                description = ''
+                for line in fd:
+                    if line.startswith('description'):
+                        description = line.split(':')[-1].strip()
             yield {
-                "name":path.split("/")[-1][:-3],
-                "install_time": str(datetime.datetime.fromtimestamp(os.stat(path).st_ctime))[0:19]
+                "name":name,
+                "description":description,
+                "install_time": str(datetime.datetime.fromtimestamp(os.stat(path).st_ctime))[0:19],
             }
