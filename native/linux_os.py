@@ -23,10 +23,17 @@ import subprocess as sp
         
 import psutil
 
+RECENTUSED_XML_PATH=os.path.expanduser("~/.local/share/recently-used.xbel")
+RECENTDOC_DIR_PATH=os.path.expanduser("~/.local/share/RecentDocuments")
+
+TRASH_DIR_PATH=os.path.expanduser("~/.local/share/Trash")
+TRASHFILE_DIR_PATH=os.path.join(TRASH_DIR_PATH, "file")
+TRASHINFO_DIR_PATH=os.path.join(TRASH_DIR_PATH, "info")
 
 class LinuxNative(AbstractOS):
     def get_file_access_records(self) -> Iterable[dict]:
-        etree = ElementTree.parse(os.path.expanduser("~/.local/share/recently-used.xbel"))
+        if os.path.isfile(RECENTUSED_XML_PATH):
+            etree = ElementTree.parse(RECENTUSED_XML_PATH)
         for bookmark in etree.findall("bookmark"):
             if 'href' in bookmark.attrib:
                 href = bookmark.attrib['href']
@@ -39,9 +46,9 @@ class LinuxNative(AbstractOS):
                     "file_path": href,
                     "is_exists": os.path.exists(href)
                 }
-
-        for desktop_file in os.listdir(os.path.expanduser("~/.local/share/RecentDocuments")):
-            desktop_filepath = os.path.join(os.path.expanduser("~/.local/share/RecentDocuments"), desktop_file)
+        elif os.path.isdir(RECENTDOC_DIR_PATH):
+            for desktop_file in os.listdir(RECENTDOC_DIR_PATH):
+                desktop_filepath = os.path.join(RECENTDOC_DIR_PATH, desktop_file)
             config = configparser.ConfigParser()
             config.read(desktop_filepath)
 
@@ -66,8 +73,9 @@ class LinuxNative(AbstractOS):
 
 
     def get_deleted_files_records(self) -> Iterable[dict]:
-        for filename in os.listdir(os.path.expanduser("~/.local/share/Trash/files")):
-            info_filename = os.path.join(os.path.expanduser("~/.local/share/Trash/info"), filename + ".trashinfo")
+        if os.path.isdir(TRASHFILE_DIR_PATH) and os.path.isdir(TRASHINFO_DIR_PATH):
+            for filename in os.listdir(TRASHFILE_DIR_PATH):
+                info_filename = os.path.join(TRASHINFO_DIR_PATH, filename + ".trashinfo")
             config = configparser.RawConfigParser()
             config.read(info_filename)
 
