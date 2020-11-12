@@ -164,16 +164,26 @@ class LinuxNative(AbstractOS):
                 }
 
     def get_services_records(self) -> Iterable[dict]:
-        bus = pydbus.SystemBus()
-        systemd = bus.get(".systemd1")
-        units = systemd.ListUnits()
-        for name, description, load_state, active_state, sub_state, _, object_path, _, _, _ in units:
-            if name.endswith(".service"):
-                service = bus.get(".systemd1", object_path)
+        for service_type in ("system", "user"):
+            proc = sp.run(shlex.split("systemctl list-unit-files --type service --no-legend --no-pager --" + service_type), stdout=sp.PIPE)
+            service_units = dict(line.strip().split() for line in proc.stdout.decode().splitlines())
+
+            proc = sp.run(shlex.split("systemctl list-units --type service --no-legend --no-pager --all"), stdout=sp.PIPE, stderr=sp.PIPE)
+            stdout = proc.stdout.decode()
+            services = stdout.splitlines(False)
+            for service in map(lambda s: s.strip(), services):
+                name, loaded, active, running, description = service.split(maxsplit=4)
+
+                proc = sp.run(["systemctl", "show", "--property", "MainPID", "--value", name], stdout=sp.PIPE, stderr=sp.PIPE)
+                pid = int(proc.stdout)
+            
                 yield {
                     "name": name,
                     "display_name": description,
-                    "status": active_state,
+                    "start_type": "auto" if service_units[name] == "enabled" else "disabled" if service_units[name] == "masked" else "manual",
+                    "process_id": pid,
+                    "is_system_service": service_type == "system",
+                    "status": running,
                 }
 
     def get_current_network_records(self) -> Iterable[dict]:
