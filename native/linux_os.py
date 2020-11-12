@@ -151,7 +151,7 @@ class LinuxNative(AbstractOS):
         
         if proc is not None:
             stdout = proc.stdout.decode()
-            packages = stdout.split("---")
+            packages = filter(lambda x: x.strip(), stdout.split("---"))
             for package in packages:
                 lines = list(filter(None, (package.strip() for package in package.splitlines())))
                 name, version = lines[0].strip().split()
