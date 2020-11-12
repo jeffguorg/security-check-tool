@@ -188,14 +188,14 @@ class LinuxNative(AbstractOS):
 
     def get_current_network_records(self) -> Iterable[dict]:
         import socket
-        return map(lambda conn: filter(lambda conn: conn.family in (socket.AddressFamily.AF_INET, socket.AddressFamily.AF_INET6), dict(
+        return map(lambda conn: dict(
             protocol = "tcp" if conn.type == socket.SOCK_STREAM else "udp" if conn.type == socket.SOCK_DGRAM else "raw",
             local_ip=conn.laddr.ip,
             local_port=conn.laddr.port,
             remote_ip=conn.raddr.ip if conn.raddr else '',
             remote_port=conn.raddr.port if conn.raddr else 0,
             status = conn.status.lower(),
-        ), psutil.net_connections()))
+        ), filter(lambda conn: conn.family in (socket.AddressFamily.AF_INET, socket.AddressFamily.AF_INET6), psutil.net_connections()))
 
     def get_system_logs_records(self) -> Iterable[dict]:
         pass
