@@ -172,6 +172,8 @@ class LinuxNative(AbstractOS):
             stdout = proc.stdout.decode()
             services = stdout.splitlines(False)
             for service in map(lambda s: s.strip(), services):
+                if name not in service_units:
+                    continue
                 name, loaded, active, running, description = service.split(maxsplit=4)
 
                 proc = sp.run(["systemctl", "show", "--property", "MainPID", "--value", name], stdout=sp.PIPE, stderr=sp.PIPE)
