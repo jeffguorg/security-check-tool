@@ -145,16 +145,16 @@ class LinuxNative(AbstractOS):
 
         proc = None
         if dpkg is not None:
-            proc = sp.run(shlex.split("dpkg-query -W -f '---\\n${Package} ${Version}\\n${Description}\\n'"), stdout=sp.PIPE, stderr=sp.PIPE)
+            proc = sp.run(shlex.split("dpkg-query -W -f '---\\n${Package}|${Version}\\n${Description}\\n'"), stdout=sp.PIPE, stderr=sp.PIPE)
         if rpm is not None:
-            proc = sp.run(shlex.split("rpm -qa --queryformat '---\\n%{name} %{version}-%{release}\\n%{description}\\n'"), stdout=sp.PIPE, stderr=sp.PIPE)
+            proc = sp.run(shlex.split("rpm -qa --queryformat '---\\n%{name}|%{version}-%{release}\\n%{description}\\n'"), stdout=sp.PIPE, stderr=sp.PIPE)
         
         if proc is not None:
             stdout = proc.stdout.decode()
             packages = filter(lambda x: x.strip(), stdout.split("---"))
             for package in packages:
                 lines = list(filter(None, (package.strip() for package in package.splitlines())))
-                name, version = lines[0].strip().split()
+                name, version = lines[0].strip().split("|")
                 description = "\n".join(lines[1:])
 
                 yield {
