@@ -28,7 +28,7 @@ RECENTUSED_XML_PATH=os.path.expanduser("~/.local/share/recently-used.xbel")
 RECENTDOC_DIR_PATH=os.path.expanduser("~/.local/share/RecentDocuments")
 
 TRASH_DIR_PATH=os.path.expanduser("~/.local/share/Trash")
-TRASHFILE_DIR_PATH=os.path.join(TRASH_DIR_PATH, "file")
+TRASHFILE_DIR_PATH=os.path.join(TRASH_DIR_PATH, "files")
 TRASHINFO_DIR_PATH=os.path.join(TRASH_DIR_PATH, "info")
 
 class LinuxNative(AbstractOS):
@@ -85,6 +85,7 @@ class LinuxNative(AbstractOS):
                 yield {
                     "filepath": filepath,
                     "delete_time": datetime.fromisoformat(config['Trash Info']['DeletionDate']).strftime("%Y-%m-%d %H:%M:%S"),
+                    "exists": True,
                 }
 
     def _read_udev_log(self, filename, value_maps):
@@ -197,6 +198,9 @@ class LinuxNative(AbstractOS):
             remote_ip=conn.raddr.ip if conn.raddr else '',
             remote_port=conn.raddr.port if conn.raddr else 0,
             status = conn.status.lower(),
+            pid = conn.pid,
+            program_path = psutil.Process(conn.pid).exe if conn.pid else None,
+            program_name = psutil.Process(conn.pid).name if conn.pid else None,
         ), filter(lambda conn: conn.family in (socket.AddressFamily.AF_INET, socket.AddressFamily.AF_INET6), psutil.net_connections()))
 
     def get_system_logs_records(self) -> Iterable[dict]:
@@ -310,5 +314,5 @@ class LinuxNative(AbstractOS):
             yield {
                 "name":name,
                 "description":description,
-                "install_time": str(datetime.datetime.fromtimestamp(os.stat(path).st_ctime))[0:19],
+                "install_time": str(datetime.fromtimestamp(os.stat(path).st_ctime))[0:19],
             }
