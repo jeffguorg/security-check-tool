@@ -314,5 +314,5 @@ class LinuxNative(AbstractOS):
             yield {
                 "name":name,
                 "description":description,
-                "install_time": str(datetime.datetime.fromtimestamp(os.stat(path).st_ctime))[0:19],
+                "install_time": str(datetime.fromtimestamp(os.stat(path).st_ctime))[0:19],
             }
