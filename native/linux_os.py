@@ -239,12 +239,15 @@ class LinuxNative(AbstractOS):
             }
 
     def get_users_groups_records(self) -> Iterable[dict]:
-        import grp
-        return map(lambda g: dict(
-            group_id= g.gr_gid,
-            group_name= g.gr_name,
-            members= g.gr_mem,
-        ), grp.getgrall())
+        res = os.popen("cat /etc/group").readlines()
+
+        for i in range(len(res)):
+            group = res[i].split(":")
+            yield{
+                "group_name": group[0],
+                "group_id":group[2],
+                "members": group[-1][:-1].split(",")
+            }
 
 
     def get_hardware_records(self) -> Iterable[dict]:
@@ -284,14 +287,28 @@ class LinuxNative(AbstractOS):
                         "address":line.split()[1]
                     }
 
-    def get_system_drivers_records(self, active_only=True) -> Iterable[dict]:
-        import kmodpy
+    def get_system_drives_records(self) -> Iterable[dict]:
+        path_list = []
+        def get_all(path):
+            paths = os.listdir(path) 
+            for i in paths:
+                com_path = os.path.join(path, i)
+                if os.path.isdir(com_path):
+                    get_all(com_path)  
+                elif os.path.isfile(com_path):
+                    path_list.append(com_path)  
+            return path_list
 
-        kmod = kmodpy.Kmod()
-        for modname, _ in (kmod.loaded() if active_only else kmod.list()):
-            modinfo = dict((k.decode(), v.decode())for k, v in kmod.modinfo(modname))
-            yield dict(
-                name=modname,
-                description=modinfo.get("description", "")
-            )
-
+        path_list=get_all("/lib/modules/"+os.listdir("/lib/modules")[0]+"/kernel/drivers")
+        for path in path_list:
+            name= path.split("/")[-1][:-3]
+            with os.popen('modinfo '+name) as fd:
+                description = ''
+                for line in fd:
+                    if line.startswith('description'):
+                        description = line.split(':')[-1].strip()
+            yield {
+                "name":name,
+                "description":description,
+                "install_time": str(datetime.datetime.fromtimestamp(os.stat(path).st_ctime))[0:19],
+            }
