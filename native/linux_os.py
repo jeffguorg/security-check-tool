@@ -138,20 +138,20 @@ class LinuxNative(AbstractOS):
     def get_installed_anti_virus_software_records(self) -> Iterable[dict]:
         return filter(lambda record: 'com.qihoo.360safe' == record.get("name"), self.get_installed_software_records())
 
-    def get_installed_software_records(self) -> Iterable[dict]:
+    def get_installed_software_records(self, sep="####SEP####") -> Iterable[dict]:
         import shutil
         dpkg = shutil.which("dpkg")
         rpm = shutil.which("rpm")
 
         proc = None
         if dpkg is not None:
-            proc = sp.run(shlex.split("dpkg-query -W -f '---\\n${Package}|${Version}\\n${Description}\\n'"), stdout=sp.PIPE, stderr=sp.PIPE)
+            proc = sp.run(shlex.split("dpkg-query -W -f '" + sep + "\\n${Package}|${Version}\\n${Description}\\n'"), stdout=sp.PIPE, stderr=sp.PIPE)
         if rpm is not None:
-            proc = sp.run(shlex.split("rpm -qa --queryformat '---\\n%{name}|%{version}-%{release}\\n%{description}\\n'"), stdout=sp.PIPE, stderr=sp.PIPE)
+            proc = sp.run(shlex.split("rpm -qa --queryformat '" + sep + "\\n%{name}|%{version}-%{release}\\n%{description}\\n'"), stdout=sp.PIPE, stderr=sp.PIPE)
         
         if proc is not None:
             stdout = proc.stdout.decode()
-            packages = filter(lambda x: x.strip(), stdout.split("---"))
+            packages = filter(lambda x: x.strip(), stdout.split(sep))
             for package in packages:
                 lines = list(filter(None, (package.strip() for package in package.splitlines())))
                 name, version = lines[0].strip().split("|")
@@ -172,9 +172,9 @@ class LinuxNative(AbstractOS):
             stdout = proc.stdout.decode()
             services = stdout.splitlines(False)
             for service in map(lambda s: s.strip(), services):
+                name, loaded, active, running, description = service.split(maxsplit=4)
                 if name not in service_units:
                     continue
-                name, loaded, active, running, description = service.split(maxsplit=4)
 
                 proc = sp.run(["systemctl", "show", "--property", "MainPID", "--value", name], stdout=sp.PIPE, stderr=sp.PIPE)
                 pid = int(proc.stdout)
@@ -208,13 +208,13 @@ class LinuxNative(AbstractOS):
             for record in utmp.read(fp.read()):
                 if record.user == 'reboot':
                     yield dict(
-                        time=datetime.fromtimestamp(record.time).strftime("%Y-%m-%d %H:%M:%S"),
-                        event= "power on",
+                        time=record.time.strftime("%Y-%m-%d %H:%M:%S"),
+                        event="power on",
                     )
                 elif record.user == 'shutdown':
                     yield dict(
-                        time=datetime.fromtimestamp(record.time).strftime("%Y-%m-%d %H:%M:%S"),
-                        event= "power off",
+                        time=record.time.strftime("%Y-%m-%d %H:%M:%S"),
+                        event="power off",
                     )
 
     def get_sharing_settings_records(self) -> Iterable[dict]:
