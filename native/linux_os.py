@@ -197,6 +197,9 @@ class LinuxNative(AbstractOS):
             remote_ip=conn.raddr.ip if conn.raddr else '',
             remote_port=conn.raddr.port if conn.raddr else 0,
             status = conn.status.lower(),
+            pid = conn.pid,
+            program_path = psutil.Process(conn.pid).exe if conn.pid else None,
+            program_name = psutil.Process(conn.pid).name if conn.pid else None,
         ), filter(lambda conn: conn.family in (socket.AddressFamily.AF_INET, socket.AddressFamily.AF_INET6), psutil.net_connections()))
 
     def get_system_logs_records(self) -> Iterable[dict]:
