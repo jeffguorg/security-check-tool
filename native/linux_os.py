@@ -28,7 +28,7 @@ RECENTUSED_XML_PATH=os.path.expanduser("~/.local/share/recently-used.xbel")
 RECENTDOC_DIR_PATH=os.path.expanduser("~/.local/share/RecentDocuments")
 
 TRASH_DIR_PATH=os.path.expanduser("~/.local/share/Trash")
-TRASHFILE_DIR_PATH=os.path.join(TRASH_DIR_PATH, "file")
+TRASHFILE_DIR_PATH=os.path.join(TRASH_DIR_PATH, "files")
 TRASHINFO_DIR_PATH=os.path.join(TRASH_DIR_PATH, "info")
 
 class LinuxNative(AbstractOS):
