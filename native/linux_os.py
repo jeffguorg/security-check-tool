@@ -85,6 +85,7 @@ class LinuxNative(AbstractOS):
                 yield {
                     "filepath": filepath,
                     "delete_time": datetime.fromisoformat(config['Trash Info']['DeletionDate']).strftime("%Y-%m-%d %H:%M:%S"),
+                    "exists": True,
                 }
 
     def _read_udev_log(self, filename, value_maps):
