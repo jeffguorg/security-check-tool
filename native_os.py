@@ -21,3 +21,8 @@ class NativeOS(AbstractOS):
         else:
             raise NotImplementedError(os_name)
         return self._instance
+
+if __name__ == '__main__':
+    # s = NativeOS.instance().list_removable_drives()
+    for i in NativeOS().instance().get_usb_storage_device_using_records():
+        print(i)

@@ -1,5 +1,7 @@
 from typing import Iterable
 
+import os
+
 
 class AbstractOS:
     # 不要等获取完所有信息后返回list，而每获取到一条记录就使用 yield 返回它
