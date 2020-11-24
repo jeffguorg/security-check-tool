@@ -129,12 +129,18 @@ class LinuxNative(AbstractOS):
         """
         read udev log from /var/log/udev-all.log
         """
-        return self._read_udev_log("/var/log/udev-all.log", {
+
+        device_records = dict(map(lambda x: (x["serial"], {
+            "serial": x["serial"],
+            "name": x["device_name"],
+            "manufacture": x["manufacture"],
+        }), self._read_udev_log("/var/log/udev-all.log", {
             "serial": lambda x: x.get("ID_SERIAL_SHORT"),
             "manufacture": lambda x: x.get("ID_VENDOR_FROM_DATABASE"),
             "device_name": lambda x: x.get("ID_MODEL"),
             "last_plugin_time": lambda x: datetime.fromisoformat(x["time"]).strftime("%Y-%m-%d %H:%M:%S"),
-        })
+        })))
+        return device_records.values()
 
     def get_installed_anti_virus_software_records(self) -> Iterable[dict]:
         return filter(lambda record: 'com.qihoo.360safe' == record.get("name"), self.get_installed_software_records())
