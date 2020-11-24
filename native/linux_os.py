@@ -180,11 +180,14 @@ class LinuxNative(AbstractOS):
                 proc = sp.run(["systemctl", "show", "--property", "MainPID", "--value", name], stdout=sp.PIPE, stderr=sp.PIPE)
                 pid = int(proc.stdout)
             
+                process = psutil.Process(pid)
+
                 yield {
                     "name": name,
                     "display_name": description,
                     "start_type": "auto" if service_units[name] == "enabled" else "disabled" if service_units[name] == "masked" else "manual",
                     "process_id": pid,
+                    "file_path": process.exe,
                     "is_system_service": service_type == "system",
                     "status": running,
                 }
@@ -220,6 +223,8 @@ class LinuxNative(AbstractOS):
                         time=record.time.strftime("%Y-%m-%d %H:%M:%S"),
                         event="power off",
                     )
+
+    get_power_of_records = get_power_off_records
 
     def get_sharing_settings_records(self) -> Iterable[dict]:
         pass
