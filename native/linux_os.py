@@ -216,19 +216,23 @@ class LinuxNative(AbstractOS):
         pass
 
     def get_power_off_records(self, wtmp_path="/var/log/wtmp") -> Iterable[dict]:
-        import utmp
-        with open(wtmp_path, "rb") as fp:
-            for record in utmp.read(fp.read()):
-                if record.user == 'reboot':
-                    yield dict(
-                        time=record.time.strftime("%Y-%m-%d %H:%M:%S"),
-                        event="power on",
-                    )
-                elif record.user == 'shutdown':
-                    yield dict(
-                        time=record.time.strftime("%Y-%m-%d %H:%M:%S"),
-                        event="power off",
-                    )
+        list_power_record_command = shutil.which("list-power-records")
+        if list_power_record_command:
+            proc = subprocess.Popen(shlex.split(list_power_record_command), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            while proc.stdout.readable():
+                user, kernel, time = proc.stdout.readline().split("|")
+                if user == 'reboot':
+                    yield {
+                        "kernel": kernel,
+                        "event": "power on",
+                        "time": datetime.fromtimestamp(int(time)).strftime("%Y-%m-%d %H:%M:%s")
+                    }
+                elif user == "shutdown":
+                    yield {
+                        "event": "power off",
+                        "time": datetime.fromtimestamp(int(time)).strftime("%Y-%m-%d %H:%M:%s")
+                    }
+        return []
 
     get_power_of_records = get_power_off_records
 
